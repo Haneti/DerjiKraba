@@ -1,0 +1,187 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="AvaloniaApplication1.Views.SupportView">
+
+    <Grid ColumnDefinitions="300,*" Margin="20">
+        <!-- Conversations List -->
+        <Border Grid.Column="0" 
+               BorderBrush="#E5E7EB" 
+               BorderThickness="1" 
+               CornerRadius="5"
+               Margin="0,0,10,0"
+               Background="White">
+            <Grid RowDefinitions="Auto,*">
+                <TextBlock Grid.Row="0" 
+                          Text="💬 Чат поддержки" 
+                          FontSize="20" 
+                          FontWeight="Bold"
+                          Foreground="#1F2937"
+                          Margin="15"/>
+                
+                <Button Grid.Row="0" 
+                       Content="Обновить" 
+                       Command="{Binding LoadConversationsCommand}"
+                       HorizontalAlignment="Right"
+                       Margin="15"
+                       Classes="Primary"
+                       Background="#3B82F6"
+                       Foreground="White"/>
+
+                <ListBox Grid.Row="1" 
+                        ItemsSource="{Binding Conversations}"
+                        SelectedItem="{Binding SelectedConversation}"
+                        SelectionMode="Single"
+                        Margin="10,0,10,10">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="10" Margin="5" CornerRadius="5" Background="#F9FAFB">
+                                <StackPanel Spacing="5">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" 
+                                                  Text="{Binding ClientName}" 
+                                                  FontWeight="Bold"
+                                                  TextWrapping="Wrap"/>
+                                        <TextBlock Grid.Column="1" 
+                                                  Text="{Binding LastMessageTime}" 
+                                                  Foreground="Gray"
+                                                  FontSize="12"/>
+                                    </Grid>
+                                    <TextBlock Text="{Binding LastMessagePreview}" 
+                                              TextWrapping="Wrap"
+                                              Foreground="Gray"
+                                              TextTrimming="CharacterEllipsis"/>
+                                    
+                                    <StackPanel IsVisible="{Binding NeedsStaffReply}" 
+                                               Orientation="Horizontal"
+                                               Spacing="5">
+                                        <Border Background="#3B82F6" 
+                                               CornerRadius="3" 
+                                               Padding="5,2">
+                                            <TextBlock Text="Требует ответа" 
+                                                      FontSize="11" 
+                                                      Foreground="White"/>
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <!-- Chat Area -->
+        <Border Grid.Column="1" 
+               BorderBrush="#E5E7EB" 
+               BorderThickness="1" 
+               CornerRadius="5"
+               Margin="10,0,0,0"
+               IsVisible="{Binding HasSelectedConversation}">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header - Light blue accent like mobile -->
+                <Border Grid.Row="0" 
+                       Background="#EFF6FF" 
+                       Padding="15"
+                       BorderBrush="#DBEAFE"
+                       BorderThickness="0,0,0,1"
+                       CornerRadius="5,5,0,0">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{Binding SelectedConversation.ClientName}" 
+                                      FontSize="18" 
+                                      FontWeight="Bold"
+                                      Foreground="#1F2937"/>
+                            <TextBlock Text="{Binding SelectedConversation.ClientPhone}" 
+                                      Foreground="#6B7280"
+                                      FontSize="12"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" 
+                               Content="Обновить" 
+                               Command="{Binding SelectConversationCommand}"
+                               CommandParameter="{Binding SelectedConversation}"
+                               Classes="Primary"
+                               Background="#3B82F6"
+                               Foreground="White"/>
+                    </Grid>
+                </Border>
+
+                <!-- Messages -->
+                <ScrollViewer Grid.Row="1" 
+                             Padding="15"
+                             HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Messages}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,5,0,5" 
+                                     ColumnDefinitions="*,Auto"
+                                     HorizontalAlignment="Right">
+                                    <Border Grid.Column="0"
+                                           Background="#DBEAFE"
+                                           CornerRadius="10"
+                                           Padding="12"
+                                           MaxWidth="400"
+                                           BorderThickness="1"
+                                           BorderBrush="#BFDBFE">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="{Binding Text}" 
+                                                      TextWrapping="Wrap"
+                                                      Foreground="#1F2937"/>
+                                            <TextBlock Text="{Binding Time}" 
+                                                      FontSize="11" 
+                                                      Foreground="#6B7280"
+                                                      HorizontalAlignment="Right"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Message Input -->
+                <Border Grid.Row="2" 
+                       Padding="15"
+                       BorderBrush="#DDD"
+                       BorderThickness="0,1,0,0"
+                       CornerRadius="0,0,5,5">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0" 
+                                Text="{Binding MessageText}"
+                                Watermark="Введите сообщение..."
+                                AcceptsReturn="False"
+                                Margin="0,0,10,0"/>
+                        
+                        <Button Grid.Column="1" 
+                               Content="Отправить" 
+                               Command="{Binding SendMessageCommand}"
+                               Classes="Primary"
+                               IsEnabled="{Binding IsNotLoading}"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Empty State -->
+        <Border Grid.Column="1" 
+               Background="#F9FAFB" 
+               CornerRadius="5"
+               IsVisible="{Binding HasNoSelectedConversation}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                <TextBlock Text="💬" FontSize="48" HorizontalAlignment="Center"/>
+                <TextBlock Text="Выберите чат" FontSize="18" HorizontalAlignment="Center" Foreground="#1F2937"/>
+                <TextBlock Text="Выберите диалог из списка слева" 
+                          TextWrapping="Wrap"
+                          TextAlignment="Center"
+                          Foreground="#6B7280"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

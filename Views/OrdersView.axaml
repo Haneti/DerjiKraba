@@ -1,0 +1,231 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="AvaloniaApplication1.Views.OrdersView">
+
+    <Grid RowDefinitions="Auto,*" Margin="20">
+        <!-- Header - Matching mobile app style -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,20">
+            <TextBlock Text="🛒 Управление заказами" 
+                      FontSize="24" 
+                      FontWeight="Bold"
+                      Foreground="#1F2937"/>
+            
+            <Button Grid.Column="1" 
+                   Content="Обновить" 
+                   Command="{Binding LoadOrdersCommand}"
+                   Classes="Primary"
+                   Background="#3B82F6"
+                   Foreground="White"/>
+        </Grid>
+
+        <!-- Main Content - Clean white background -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,400">
+            <!-- Orders List -->
+            <Border Grid.Column="0" 
+                   BorderBrush="#E5E7EB" 
+                   BorderThickness="1" 
+                   CornerRadius="5"
+                   Margin="0,0,10,0"
+                   Background="White"
+                   IsVisible="{Binding !SelectedOrder}">
+                <DataGrid ItemsSource="{Binding Orders}"
+                         SelectedItem="{Binding SelectedOrder}"
+                         AutoGenerateColumns="False"
+                         IsReadOnly="True"
+                         CanUserResizeColumns="True"
+                         CanUserSortColumns="True"
+                         GridLinesVisibility="Horizontal"
+                         HeadersVisibility="All">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="№" Binding="{Binding Id, StringFormat={}{0:0000}}" Width="60"/>
+                        <DataGridTextColumn Header="Дата" Binding="{Binding OrderDate, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="130"/>
+                        <DataGridTextColumn Header="Клиент" Binding="{Binding Customer.FullName}" Width="180"/>
+                        <DataGridTextColumn Header="Телефон" Binding="{Binding Customer.Phone}" Width="120"/>
+                        <DataGridTextColumn Header="Сумма" Binding="{Binding TotalAmount, StringFormat={}{0:F2} ₽}" Width="100"/>
+                        <DataGridTextColumn Header="Статус" Binding="{Binding StatusDisplay}" Width="150"/>
+                        <DataGridTextColumn Header="Тип" Binding="{Binding DeliveryTypeDisplay}" Width="100"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- Order Details Panel - Light blue accent like mobile -->
+            <Border Grid.Column="1" 
+                   Background="#EFF6FF" 
+                   CornerRadius="5" 
+                   Padding="15"
+                   Margin="10,0,0,0"
+                   IsVisible="{Binding SelectedOrder}">
+                <ScrollViewer>
+                    <StackPanel Spacing="15">
+                        <TextBlock Text="Детали заказа" 
+                                  FontSize="18" 
+                                  FontWeight="Bold"
+                                  HorizontalAlignment="Center"
+                                  Foreground="#1F2937"/>
+
+                        <!-- Order Info -->
+                        <Border Background="White" CornerRadius="5" Padding="10" BorderThickness="1" BorderBrush="#DDD">
+                            <StackPanel Spacing="8">
+                                <TextBlock FontSize="14">
+                                    <Run FontWeight="Bold">Заказ №</Run>
+                                    <Run Text="{Binding SelectedOrder.Id}"/>
+                                </TextBlock>
+                                <TextBlock FontSize="14">
+                                    <Run FontWeight="Bold">Дата:</Run>
+                                    <Run Text="{Binding SelectedOrder.OrderDate, StringFormat={}{0:dd.MM.yyyy HH:mm}}"/>
+                                </TextBlock>
+                                <TextBlock FontSize="14">
+                                    <Run FontWeight="Bold">Статус:</Run>
+                                    <Run Text="{Binding SelectedOrder.StatusDisplay}"/>
+                                </TextBlock>
+                                <TextBlock FontSize="14">
+                                    <Run FontWeight="Bold">Тип доставки:</Run>
+                                    <Run Text="{Binding SelectedOrder.DeliveryTypeDisplay}"/>
+                                </TextBlock>
+                                <TextBlock FontSize="14" IsVisible="{Binding SelectedOrder.DeliveryAddress, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <Run FontWeight="Bold">Адрес:</Run>
+                                    <Run Text="{Binding SelectedOrder.DeliveryAddress}"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Customer Info -->
+                        <Border Background="White" CornerRadius="5" Padding="10" BorderThickness="1" BorderBrush="#DDD">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Клиент" FontWeight="Bold" FontSize="14"/>
+                                <TextBlock FontSize="14" Text="{Binding SelectedOrder.Customer.FullName}"/>
+                                <TextBlock FontSize="14">
+                                    <Run>📞 </Run>
+                                    <Run Text="{Binding SelectedOrder.Customer.Phone}"/>
+                                </TextBlock>
+                                <TextBlock FontSize="14" IsVisible="{Binding SelectedOrder.Customer.Address, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <Run>📍 </Run>
+                                    <Run Text="{Binding SelectedOrder.Customer.Address}"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Order Items -->
+                        <Border Background="White" CornerRadius="5" Padding="10" BorderThickness="1" BorderBrush="#DDD">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Товары" FontWeight="Bold" FontSize="14"/>
+                                <ItemsControl ItemsSource="{Binding SelectedOrder.Items}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#F5F5F5" 
+                                                   CornerRadius="5" 
+                                                   Padding="8"
+                                                   Margin="0,0,0,5">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <StackPanel Grid.Column="0" Spacing="3">
+                                                        <TextBlock Text="{Binding ProductName}" FontWeight="Bold" Foreground="#1F2937"/>
+                                                        <TextBlock Foreground="#6B7280">
+                                                            <Run Text="{Binding Quantity}"/>
+                                                            <Run> × </Run>
+                                                            <Run Text="{Binding PricePerKg, StringFormat={}{0:F2} ₽}"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" 
+                                                              Text="{Binding Total, StringFormat={}{0:F2} ₽}" 
+                                                              FontWeight="Bold"
+                                                              VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Separator/>
+                                
+                                <Grid ColumnDefinitions="*,*">
+                                    <TextBlock Text="Итого:" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Grid.Column="1" 
+                                              Text="{Binding SelectedOrder.TotalAmount, StringFormat={}{0:F2} ₽}" 
+                                              FontWeight="Bold" 
+                                              FontSize="16"
+                                              HorizontalAlignment="Right"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Notes -->
+                        <TextBox Text="{Binding SelectedOrder.Notes}" 
+                                IsReadOnly="True"
+                                AcceptsReturn="True"
+                                TextWrapping="Wrap"
+                                Height="60"
+                                Watermark="Комментарий к заказу"
+                                IsVisible="{Binding SelectedOrder.Notes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+                        <!-- Status Update Buttons -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Изменить статус" FontWeight="Bold" FontSize="14"/>
+                            
+                            <WrapPanel Orientation="Horizontal">
+                                <Button Content="Ожидает" 
+                                       Command="{Binding UpdateOrderStatusCommand}"
+                                       CommandParameter="pending"
+                                       Background="#6B7280"
+                                       Foreground="White"
+                                       Margin="2"/>
+                                <Button Content="В обработке" 
+                                       Command="{Binding UpdateOrderStatusCommand}"
+                                       CommandParameter="processing"
+                                       Background="#3B82F6"
+                                       Foreground="White"
+                                       Margin="2"/>
+                                <Button Content="Готов" 
+                                       Command="{Binding UpdateOrderStatusCommand}"
+                                       CommandParameter="ready"
+                                       Background="#10B981"
+                                       Foreground="White"
+                                       Margin="2"/>
+                                <Button Content="Доставляется" 
+                                       Command="{Binding UpdateOrderStatusCommand}"
+                                       CommandParameter="delivering"
+                                       Background="#8B5CF6"
+                                       Foreground="White"
+                                       Margin="2"/>
+                                <Button Content="Завершен" 
+                                       Command="{Binding UpdateOrderStatusCommand}"
+                                       CommandParameter="completed"
+                                       Background="#059669"
+                                       Foreground="White"
+                                       Margin="2"/>
+                                <Button Content="Отменен" 
+                                       Command="{Binding UpdateOrderStatusCommand}"
+                                       CommandParameter="cancelled"
+                                       Background="#6B7280"
+                                       Foreground="White"
+                                       Margin="2"/>
+                            </WrapPanel>
+                        </StackPanel>
+
+                        <!-- Error Message -->
+                        <TextBlock Text="{Binding ErrorMessage}" 
+                                  Foreground="#DC2626" 
+                                  TextWrapping="Wrap"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Empty State -->
+            <Border Grid.Column="0" 
+                   Background="#F9FAFB" 
+                   CornerRadius="5"
+                   IsVisible="{Binding !HasOrders}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                    <TextBlock Text="🛒" FontSize="48" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Нет заказов" FontSize="18" HorizontalAlignment="Center" Foreground="#1F2937"/>
+                    <TextBlock Text="Заказы появятся здесь" 
+                              TextWrapping="Wrap"
+                              TextAlignment="Center"
+                              Foreground="#6B7280"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

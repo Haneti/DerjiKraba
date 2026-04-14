@@ -1,0 +1,280 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\views\\loginview.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:views\\loginview.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\views\\loginview.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:views\\loginview.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\viewmodels\\loginviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:viewmodels\\loginviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\readme_ru.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:readme_ru.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\quick_start.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:quick_start.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\services\\apiservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:services\\apiservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\models\\order.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:models\\order.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\views\\ordersview.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:views\\ordersview.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\views\\mainwindow.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:views\\mainwindow.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\views\\mainwindow.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:views\\mainwindow.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\viewmodels\\mainwindowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:viewmodels\\mainwindowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\viewlocator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:viewlocator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\app.manifest||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:app.manifest||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|c:\\users\\pizdec\\desktop\\derjikrabaapps\\derjikrabadesktop\\avaloniaapplication1\\app.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{744059F7-FA50-4DCC-92FD-595B63FBC0D7}|AvaloniaApplication1.csproj|solutionrelative:app.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Models\\User.cs",
+              "RelativeDocumentMoniker": "Models\\User.cs",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Models\\User.cs",
+              "RelativeToolTip": "Models\\User.cs",
+              "ViewState": "AgIAAAEAAADwZWZmZmYkwBwAAABYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-10T22:28:00.087Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "LoginView.axaml.cs",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Views\\LoginView.axaml.cs",
+              "RelativeDocumentMoniker": "Views\\LoginView.axaml.cs",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Views\\LoginView.axaml.cs",
+              "RelativeToolTip": "Views\\LoginView.axaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-10T22:27:09.724Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "LoginView.axaml",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Views\\LoginView.axaml",
+              "RelativeDocumentMoniker": "Views\\LoginView.axaml",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Views\\LoginView.axaml",
+              "RelativeToolTip": "Views\\LoginView.axaml",
+              "ViewState": "AgIAACcAAAAA7pDFxscawDIAAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-03-16T09:38:50.635Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "README_RU.md",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\README_RU.md",
+              "RelativeDocumentMoniker": "README_RU.md",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\README_RU.md",
+              "RelativeToolTip": "README_RU.md",
+              "ViewState": "AgIAADUAAAAAAAAAAAAAADUAAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-03-16T09:41:29.588Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "QUICK_START.md",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\QUICK_START.md",
+              "RelativeDocumentMoniker": "QUICK_START.md",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\QUICK_START.md",
+              "RelativeToolTip": "QUICK_START.md",
+              "ViewState": "AgIAAMoAAAAAAAAAAADgv9gAAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-03-16T09:41:06.594Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "ApiService.cs",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Services\\ApiService.cs",
+              "RelativeDocumentMoniker": "Services\\ApiService.cs",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Services\\ApiService.cs",
+              "RelativeToolTip": "Services\\ApiService.cs",
+              "ViewState": "AgIAAA8AAAAAAAAAAIAawBQAAAA3AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-16T09:40:57.766Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Order.cs",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Models\\Order.cs",
+              "RelativeDocumentMoniker": "Models\\Order.cs",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Models\\Order.cs",
+              "RelativeToolTip": "Models\\Order.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-16T09:40:47.227Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "OrdersView.axaml",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Views\\OrdersView.axaml",
+              "RelativeDocumentMoniker": "Views\\OrdersView.axaml",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Views\\OrdersView.axaml",
+              "RelativeToolTip": "Views\\OrdersView.axaml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-03-16T09:36:05.482Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "MainWindow.axaml.cs",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Views\\MainWindow.axaml.cs",
+              "RelativeDocumentMoniker": "Views\\MainWindow.axaml.cs",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Views\\MainWindow.axaml.cs",
+              "RelativeToolTip": "Views\\MainWindow.axaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-16T09:02:32.297Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-16T06:50:36.721Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "LoginViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\ViewModels\\LoginViewModel.cs",
+              "RelativeDocumentMoniker": "ViewModels\\LoginViewModel.cs",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\ViewModels\\LoginViewModel.cs",
+              "RelativeToolTip": "ViewModels\\LoginViewModel.cs",
+              "ViewState": "AgIAAJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-16T12:01:26.328Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "App.axaml",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\App.axaml",
+              "RelativeDocumentMoniker": "App.axaml",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\App.axaml",
+              "RelativeToolTip": "App.axaml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-03-16T06:50:40.934Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "app.manifest",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\app.manifest",
+              "RelativeDocumentMoniker": "app.manifest",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\app.manifest",
+              "RelativeToolTip": "app.manifest",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001203|",
+              "WhenOpened": "2026-03-16T06:50:38.868Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "ViewLocator.cs",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\ViewLocator.cs",
+              "RelativeDocumentMoniker": "ViewLocator.cs",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\ViewLocator.cs",
+              "RelativeToolTip": "ViewLocator.cs",
+              "ViewState": "AgIAAAIAAADMmZmZmdkhwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-16T06:50:37.905Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "MainWindow.axaml",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Views\\MainWindow.axaml",
+              "RelativeDocumentMoniker": "Views\\MainWindow.axaml",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\Views\\MainWindow.axaml",
+              "RelativeToolTip": "Views\\MainWindow.axaml",
+              "ViewState": "AgIAAEkAAAAAAAAAAAAAAAgAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-03-16T06:11:53.165Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "MainWindowViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\ViewModels\\MainWindowViewModel.cs",
+              "RelativeDocumentMoniker": "ViewModels\\MainWindowViewModel.cs",
+              "ToolTip": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1\\ViewModels\\MainWindowViewModel.cs",
+              "RelativeToolTip": "ViewModels\\MainWindowViewModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-16T06:11:50.195Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

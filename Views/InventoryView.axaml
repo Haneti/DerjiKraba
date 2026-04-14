@@ -1,0 +1,114 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="AvaloniaApplication1.Views.InventoryView">
+
+    <Grid RowDefinitions="Auto,Auto,*" Margin="20">
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,20">
+            <TextBlock Text="📋 Инвентаризация" 
+                      FontSize="24" 
+                      FontWeight="Bold"
+                      Foreground="#1F2937"/>
+            
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                <Button Content="Начать" 
+                       Command="{Binding StartInventoryCommand}"
+                       IsVisible="{Binding !HasInventoryStarted}"
+                       Classes="Primary"
+                       Background="#3B82F6"
+                       Foreground="White"/>
+                
+                <StackPanel Orientation="Horizontal" Spacing="10"
+                           IsVisible="{Binding HasInventoryStarted}">
+                    <Button Content="Отмена" 
+                           Command="{Binding CancelInventoryCommand}"
+                           Background="#6B7280"
+                           Foreground="White"/>
+                    <Button Content="Завершить" 
+                           Command="{Binding FinishInventoryCommand}"
+                           Classes="Primary"
+                           Background="#3B82F6"
+                           Foreground="White"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
+        <!-- Filter Chips -->
+        <Border Grid.Row="1" Background="White" CornerRadius="5" Padding="10" Margin="0,0,0,10">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Content="Все" 
+                           Command="{Binding SetSelectedFilterCommand}"
+                           CommandParameter="Все"/>
+                    
+                    <Button Content="Недостачи" 
+                           Command="{Binding SetSelectedFilterCommand}"
+                           CommandParameter="Недостачи"/>
+                    
+                    <Button Content="Излишки" 
+                           Command="{Binding SetSelectedFilterCommand}"
+                           CommandParameter="Излишки"/>
+                    
+                    <Button Content="В норме" 
+                           Command="{Binding SetSelectedFilterCommand}"
+                           CommandParameter="В норме"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Inventory List - Visible ONLY when inventory started -->
+        <Border Grid.Row="2" 
+               BorderBrush="#E5E7EB" 
+               BorderThickness="1" 
+               CornerRadius="5"
+               Background="White"
+               IsVisible="{Binding HasInventoryStarted}">
+            <DataGrid ItemsSource="{Binding FilteredItems}" 
+                     AutoGenerateColumns="False"
+                     IsReadOnly="False"
+                     CanUserResizeColumns="True"
+                     CanUserSortColumns="True"
+                     GridLinesVisibility="Horizontal"
+                     HeadersVisibility="Column"
+                     Margin="0"
+                     Background="Transparent">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Название" Binding="{Binding ProductName}" Width="*"/>
+                    <DataGridTextColumn Header="Категория" Binding="{Binding Category}" Width="150"/>
+                    <DataGridTextColumn Header="Система" Binding="{Binding SystemQuantity, StringFormat=F2}" Width="100"/>
+                    <DataGridTemplateColumn Header="Факт" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <NumericUpDown Value="{Binding ActualQuantity}" 
+                                             FormatString="0.00"
+                                             Minimum="0"
+                                             Maximum="1000000"
+                                             HorizontalAlignment="Stretch"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Разница" Binding="{Binding DisplayDifference}" Width="100"/>
+                    <DataGridTextColumn Header="Тип" Binding="{Binding AdjustmentType}" Width="100"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- Empty State - Visible ONLY when inventory NOT started -->
+        <Border Grid.Row="2" 
+               Background="#F9FAFB" 
+               CornerRadius="5"
+               IsVisible="{Binding !HasInventoryStarted}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center"/>
+                <TextBlock Text="Инвентаризация не начата" FontSize="18" HorizontalAlignment="Center" Foreground="#1F2937"/>
+                <TextBlock Text="Нажмите кнопку «Начать» чтобы начать инвентаризацию" 
+                          TextWrapping="Wrap"
+                          TextAlignment="Center"
+                          Foreground="#6B7280"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

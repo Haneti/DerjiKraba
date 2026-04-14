@@ -1,0 +1,86 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:AvaloniaApplication1.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="using:AvaloniaApplication1.Views"
+        mc:Ignorable="d" d:DesignWidth="1024" d:DesignHeight="768"
+        x:Class="AvaloniaApplication1.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Морепродукты - АРМ Сотрудника"
+        Width="1024" Height="768"
+        WindowStartupLocation="CenterScreen">
+
+    <Design.DataContext>
+        <vm:MainViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Top Bar - Matching iOS blue header with white text -->
+        <Border Grid.Row="0" 
+               Background="#3B82F6" 
+               Padding="15,10">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="15">
+                    <!-- Navigation Buttons -->
+                    <Button Content="📦 Товары" 
+                           Command="{Binding NavigateToProductsCommand}"
+                           IsVisible="{Binding ShowProducts}"
+                           Classes="Primary"
+                           Background="#3B82F6"
+                           Foreground="White"/>
+                    
+                    <Button Content="🛒 Заказы" 
+                           Command="{Binding NavigateToOrdersCommand}"
+                           IsVisible="{Binding ShowOrders}"
+                           Background="#3B82F6"
+                           Foreground="White"/>
+                    
+                    <Button Content="📋 Инвентаризация" 
+                           Command="{Binding NavigateToInventoryCommand}"
+                           IsVisible="{Binding ShowInventory}"
+                           Background="#3B82F6"
+                           Foreground="White"/>
+                    
+                    <Button Content="💬 Поддержка" 
+                           Command="{Binding NavigateToSupportCommand}"
+                           IsVisible="{Binding ShowSupport}"
+                           Background="#3B82F6"
+                           Foreground="White"/>
+                    
+                    <Button Content="👥 Сотрудники" 
+                           Command="{Binding NavigateToStaffCommand}"
+                           IsVisible="{Binding ShowStaffManagement}"
+                           Background="#3B82F6"
+                           Foreground="White"/>
+                </StackPanel>
+
+                <!-- User Info and Logout -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="15" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding CurrentUser.FullName}" 
+                              Foreground="White" 
+                              FontSize="14"
+                              FontWeight="SemiBold"
+                              VerticalAlignment="Center"
+                              IsVisible="{Binding IsLoggedIn}"/>
+                    
+                    <Button Content="Выход" 
+                           Command="{Binding LogoutCommand}"
+                           IsVisible="{Binding IsLoggedIn}"
+                           Background="#2563EB"
+                           Foreground="White"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Content Area - Clean white background like mobile app -->
+        <Border Grid.Row="1" Background="White">
+            <Grid>
+                <!-- Current View Content -->
+                <ContentControl Content="{Binding CurrentView}" 
+                               Margin="0,50,0,0"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

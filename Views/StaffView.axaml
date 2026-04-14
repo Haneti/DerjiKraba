@@ -1,0 +1,163 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:system="clr-namespace:System;assembly=System.Runtime"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="AvaloniaApplication1.Views.StaffView">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="20">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Spacing="15" Margin="0,0,0,20">
+            <TextBlock Text="👥 Управление сотрудниками" 
+                      FontSize="24" 
+                      FontWeight="Bold"
+                      Foreground="#1F2937"/>
+            
+            <TextBlock Text="Создание и управление аккаунтами сотрудников" 
+                      FontSize="14"
+                      Foreground="#6B7280"/>
+        </StackPanel>
+
+        <!-- Main Content -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="20">
+                <!-- Create New Staff Button -->
+                <Button Content="➕ Создать нового сотрудника" 
+                       Command="{Binding ToggleCreateModeCommand}"
+                       HorizontalAlignment="Left"
+                       Classes="Primary"/>
+
+                <!-- Cancel Button (visible when creating) -->
+                <Button Content="❌ Отмена создания" 
+                       Command="{Binding ToggleCreateModeCommand}"
+                       HorizontalAlignment="Left"
+                       IsVisible="{Binding IsCreatingNew}"/>
+
+                <!-- Create New Staff Form -->
+                <Border IsVisible="{Binding IsCreatingNew}"
+                       Background="#F9FAFB"
+                       CornerRadius="8"
+                       Padding="20"
+                       BorderBrush="#E5E7EB"
+                       BorderThickness="1">
+                    <StackPanel Spacing="15">
+                        <TextBlock Text="Новый сотрудник" 
+                                  FontSize="18" 
+                                  FontWeight="Bold"
+                                  Foreground="#1F2937"/>
+
+                        <TextBox Watermark="Номер телефона" 
+                                Text="{Binding NewPhone}"/>
+
+                        <Grid ColumnDefinitions="*,*,*">
+                            <TextBox Grid.Column="0" Watermark="Фамилия" 
+                                    Text="{Binding NewLastName}"/>
+                            <TextBox Grid.Column="1" Watermark="Имя" Margin="5,0"
+                                    Text="{Binding NewFirstName}"/>
+                            <TextBox Grid.Column="2" Watermark="Отчество (необязательно)" 
+                                    Text="{Binding NewMiddleName}"/>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="Роль:" VerticalAlignment="Center" Foreground="#1F2937"/>
+                            <ComboBox SelectedItem="{Binding SelectedRole}" MinWidth="150">
+                                <ComboBox.Items>
+                                    <system:String>employee</system:String>
+                                    <system:String>owner</system:String>
+                                </ComboBox.Items>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button Content="Создать аккаунт" 
+                                   Command="{Binding CreateStaffAccountCommand}"
+                                   IsEnabled="{Binding !IsLoading}"
+                                   Classes="Primary"/>
+                            <Button Content="Очистить" 
+                                   Command="{Binding ClearNewUserFormCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Error Message -->
+                <Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                       Background="#FEF2F2"
+                       CornerRadius="8"
+                       Padding="15"
+                       BorderBrush="#FCA5A5"
+                       BorderThickness="1">
+                    <TextBlock Text="{Binding ErrorMessage}" 
+                              Foreground="#DC2626"
+                              TextWrapping="Wrap"/>
+                </Border>
+
+                <!-- Users List -->
+                <Border Background="#F9FAFB"
+                       CornerRadius="8"
+                       Padding="20"
+                       BorderBrush="#E5E7EB"
+                       BorderThickness="1">
+                    <StackPanel Spacing="15">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="📋 Все пользователи" 
+                                      FontSize="18" 
+                                      FontWeight="Bold"
+                                      Foreground="#1F2937"/>
+                            <Button Content="🔄 Обновить" 
+                                   Command="{Binding RefreshUsersCommand}"
+                                   HorizontalAlignment="Left"/>
+                        </StackPanel>
+
+                        <DataGrid ItemsSource="{Binding AllUsers}"
+                                 SelectedItem="{Binding SelectedUser}"
+                                 AutoGenerateColumns="False"
+                                 CanUserResizeColumns="True"
+                                 CanUserSortColumns="True"
+                                 GridLinesVisibility="Horizontal"
+                                 BorderThickness="0"
+                                 MinHeight="300">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Телефон" Binding="{Binding Phone}" Width="150"/>
+                                <DataGridTextColumn Header="ФИО" Binding="{Binding FullName}" Width="*"/>
+                                <DataGridTextColumn Header="Роль" Binding="{Binding Role}" Width="100"/>
+                                <DataGridTemplateColumn Header="Действия" Width="300">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <Button Content="👤 Сотрудник" 
+                                                       Command="{Binding $parent[DataGrid].DataContext.PromoteToEmployeeCommand}"
+                                                       Classes="Primary"/>
+                                                <Button Content="👑 Владелец" 
+                                                       Command="{Binding $parent[DataGrid].DataContext.PromoteToOwnerCommand}"
+                                                       Classes="Primary"/>
+												<Button Content="⬇️ Понизить"
+                                                        Command="{Binding $parent[DataGrid].DataContext.DemoteUserCommand}"
+                                                        CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Loading Indicator -->
+        <Border Grid.Row="2" 
+               IsVisible="{Binding IsLoading}"
+               Background="#F3F4F6"
+               CornerRadius="8"
+               Padding="20"
+               Margin="0,10,0,0">
+            <StackPanel Orientation="Horizontal" 
+                       HorizontalAlignment="Center" 
+                       Spacing="10">
+                <ProgressBar IsIndeterminate="True" Width="100"/>
+                <TextBlock Text="Загрузка..." Foreground="#1F2937"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,98 @@
+﻿sequenceDiagram
+    autonumber
+    actor U as Сотрудник
+    participant W as MainWindow (Avalonia View)
+    participant M as MainViewModel
+    participant L as LoginViewModel
+    participant F as PhoneFormatter
+    participant A as ApiService
+    participant B as Backend API
+
+    U->>W: Открывает приложение
+    W->>M: Создаёт MainViewModel()
+    M->>L: CurrentView = LoginViewModel
+    M-->>U: Показывает экран входа
+
+    U->>L: Вводит телефон и нажимает "Войти"
+    L->>F: NormalizeForApi(phone)
+    F-->>L: normalizedPhone
+    L->>A: LoginAsync(normalizedPhone)
+    A->>B: POST /auth/login
+    B-->>A: User/null
+    A-->>L: User/null
+
+    alt Пользователь не найден или не staff
+        L-->>U: Ошибка доступа/пользователь не найден
+    else Staff найден
+        L->>A: RequestVerificationCodeAsync(phone)
+        A->>B: POST /auth/request-code
+        B-->>A: 200/ошибка
+        A-->>L: success/fail
+        L-->>U: Показ шага подтверждения Telegram
+        U->>L: Вводит код
+        L->>A: VerifyCodeAsync(phone, code)
+        A->>B: POST /auth/verify-code
+        B-->>A: User/null
+        A-->>L: User/null
+        L-->>M: LoginCompleted(user)
+        M-->>U: Устанавливает права и открывает "Товары" по умолчанию
+    end
+
+    alt Навигация: Товары
+        U->>M: NavigateToProducts
+        M->>M: new ProductsViewModel(user)
+        M->>A: GetProductsAsync()
+        A->>B: GET /products
+        B-->>A: List<Product>
+        A-->>M: products
+        M-->>U: Список товаров
+    else Навигация: Заказы
+        U->>M: NavigateToOrders
+        M->>A: GetOrdersAsync()
+        A->>B: GET /orders
+        B-->>A: List<Order>
+        A-->>M: orders
+        U->>M: Изменить статус заказа
+        M->>A: UpdateOrderStatusAsync(orderId, status)
+        A->>B: PATCH /orders/{id}
+        B-->>A: 200/ошибка
+        A-->>M: success/fail
+    else Навигация: Поддержка
+        U->>M: NavigateToSupport
+        M->>A: GetConversationsAsync()
+        A->>B: GET /support/conversations
+        B-->>A: List<SupportConversation>
+        A-->>M: conversations
+        U->>M: Выбирает диалог
+        M->>A: GetMessagesAsync(clientPhone)
+        A->>B: GET /support/conversations/{phone}/messages
+        B-->>A: List<SupportMessage>
+        A-->>M: messages
+        U->>M: Отправляет сообщение
+        M->>A: SendMessageAsync(clientPhone, staffPhone, text)
+        A->>B: POST /support/conversations/{phone}/messages
+        B-->>A: 200/ошибка
+        A-->>M: success/fail
+    else Навигация: Инвентаризация (owner)
+        U->>M: NavigateToInventory
+        M->>A: GetProductsAsync()
+        A->>B: GET /products
+        B-->>A: List<Product>
+        A-->>M: products
+        U->>M: Завершить инвентаризацию
+        M->>A: ApplyInventoryAdjustmentAsync(items)
+        A->>B: POST /inventory/adjustments
+        B-->>A: 200/ошибка
+        A-->>M: success/fail
+    else Навигация: Сотрудники (owner)
+        U->>M: NavigateToStaff
+        M->>A: GetAllUsersAsync()
+        A->>B: GET /users
+        B-->>A: List<User>
+        A-->>M: users
+        U->>M: Создать сотрудника / изменить роль
+        M->>A: CreateStaffAsync(...) / UpdateUserRoleAsync(...)
+        A->>B: POST /staff/create / PATCH role endpoint
+        B-->>A: User/success/fail
+        A-->>M: результат операции
+    end

@@ -1,0 +1,213 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:AvaloniaApplication1.Controls"
+             xmlns:converters="using:AvaloniaApplication1.Converters"
+             xmlns:ViewModels="using:AvaloniaApplication1.ViewModels"
+             xmlns:system="clr-namespace:System;assembly=System.Runtime"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="AvaloniaApplication1.Views.ProductsView">
+
+    <UserControl.Resources>
+        <converters:BoolToBorderBrushConverter x:Key="BorderBrushConverter"/>
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto,*" Margin="20">
+        <!-- Header - Matching mobile app style -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,20">
+            <TextBlock Text="📦 Управление товарами" 
+                      FontSize="24" 
+                      FontWeight="Bold"
+                      Foreground="#1F2937"/>
+            
+            <Button Grid.Column="1" 
+                   Content="+ Добавить товар" 
+                   Command="{Binding StartCreateCommand}"
+                   Classes="Primary"
+                   Background="#3B82F6"
+                   Foreground="White"/>
+        </Grid>
+
+        <!-- Main Content - Clean white background -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,350">
+            <!-- Products Gallery List -->
+            <Border Grid.Column="0" 
+                   BorderBrush="#E5E7EB" 
+                   BorderThickness="1" 
+                   CornerRadius="5"
+                   Margin="0,0,10,0"
+                   Background="White">
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Products}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="220" Height="280" Margin="8" 
+                                        CornerRadius="8" BorderThickness="2"
+                                        Background="White" BoxShadow="0 2 4 #20000000"
+                                        Cursor="Hand">
+                                    <Border.Styles>
+                                        <Style Selector="Border:pointerover">
+                                            <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                        </Style>
+                                    </Border.Styles>
+                                    <StackPanel Spacing="8" Margin="12">
+                                        <!-- Product Image -->
+                                        <Border Width="196" Height="160" CornerRadius="6" Background="#DBEAFE" ClipToBounds="True">
+                                            <controls:CachedImage 
+                                                SourceUrl="{Binding ImageURL}" 
+                                                ImageHash="{Binding ImageHash}"
+                                                ProductName="{Binding Name}"
+                                                Stretch="UniformToFill"/>
+                                        </Border>
+                                        
+                                        <!-- Product Info -->
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" 
+                                                       TextWrapping="Wrap" MaxLines="2" Foreground="#1F2937"/>
+                                            <TextBlock Text="{Binding Category}" FontSize="12" Foreground="#6B7280"
+                                                       TextWrapping="NoWrap"/>
+                                            
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Text="{Binding DisplayPrice}" FontWeight="Bold" FontSize="14" 
+                                                           Foreground="#3B82F6"/>
+                                                <TextBlock Text="{Binding StockStatus}" FontSize="11" Foreground="#6B7280" 
+                                                           Grid.Column="1" TextAlignment="Right"/>
+                                            </Grid>
+                                            
+                                            <Border IsVisible="{Binding !IsAvailable}" Background="#F3F4F6" 
+                                                    CornerRadius="4" Padding="4,2" HorizontalAlignment="Left">
+                                                <TextBlock Text="Скрыт" FontSize="11" Foreground="#6B7280"/>
+                                            </Border>
+                                            
+                                            <!-- Edit Button - Visible for staff only -->
+                                            <Button Content="✏️ Ред." 
+                                                    Command="{Binding $parent[ItemsControl].DataContext.StartEditCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Classes="Primary"
+                                                    HorizontalAlignment="Left"
+                                                    Margin="0,5,0,0"
+                                                    Padding="8,4"
+                                                    FontSize="12"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Edit/Create Panel - Light blue accent like mobile -->
+            <Border Grid.Column="1" 
+                   Background="#EFF6FF" 
+                   CornerRadius="5" 
+                   Padding="15"
+                   IsVisible="{Binding IsEditing}">
+                <ScrollViewer>
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Редактирование товара" 
+                                  FontSize="18" 
+                                  FontWeight="Bold"
+                                  HorizontalAlignment="Center"
+                                  Foreground="#1F2937"/>
+
+                        <TextBox Watermark="Название*" Text="{Binding ProductName}"/>
+                        <TextBox Watermark="Категория*" Text="{Binding Category}"/>
+                        
+                        <NumericUpDown Value="{Binding PricePerKg}" 
+                                      FormatString="0.00"
+                                      Minimum="0"
+                                      Maximum="1000000"
+                                      Watermark="Цена за кг"
+                                      Background="White"
+                                      Foreground="#1F2937"/>
+                        
+                        <NumericUpDown Value="{Binding QuantityInStock}" 
+                                      FormatString="0"
+                                      Minimum="0"
+                                      Maximum="1000000"
+                                      Watermark="Количество"
+                                      Background="White"
+                                      Foreground="#1F2937"/>
+                        
+                        <DatePicker SelectedDate="{Binding DeliveryDate}"
+                                   Background="White"
+                                   Foreground="#1F2937"/>
+                        
+                        <DatePicker SelectedDate="{Binding ExpiryDate}"
+                                   Background="White"
+                                   Foreground="#1F2937"/>
+                        
+                        <TextBox Watermark="Описание" 
+                                Text="{Binding Description}"
+                                AcceptsReturn="True"
+                                TextWrapping="Wrap"
+                                Height="80"
+                                Background="White"
+                                Foreground="#1F2937"/>
+                        
+                        <CheckBox Content="Доступен для заказа" 
+                                 IsChecked="{Binding IsAvailable}"
+                                 Foreground="#1F2937"/>
+                        
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="Ед. измерения:" VerticalAlignment="Center" Foreground="#1F2937"/>
+                            <ComboBox SelectedItem="{Binding UnitType}" MinWidth="100">
+                                <ComboBox.Items>
+                                    <system:String>kg</system:String>
+                                    <system:String>piece</system:String>
+                                </ComboBox.Items>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Error Message -->
+                        <TextBlock Text="{Binding ErrorMessage}" 
+                                  Foreground="#DC2626" 
+                                  TextWrapping="Wrap"/>
+
+                        <!-- Buttons -->
+                        <Grid ColumnDefinitions="*,*" Margin="0,10,0,0">
+                            <Button Content="Сохранить" 
+                                   Command="{Binding SaveProductCommand}"
+                                   Classes="Primary"
+                                   Margin="0,0,5,0"/>
+                            <Button Grid.Column="1" 
+                                   Content="Отмена" 
+                                   Command="{Binding CancelEditCommand}"
+                                   Margin="5,0,0,0"/>
+                        </Grid>
+
+                        <!-- Delete Button (only for edit) -->
+                        <Button Content="Удалить товар" 
+                               Command="{Binding DeleteProductCommand}"
+                               CommandParameter="{Binding SelectedProduct}"
+                               Background="#DC2626"
+                               Foreground="White"
+                               Margin="0,10,0,0"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Empty State -->
+            <Border Grid.Column="0" 
+                   Background="#F9FAFB" 
+                   CornerRadius="5"
+                   IsVisible="{Binding !HasProducts}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                    <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Нет товаров" FontSize="18" HorizontalAlignment="Center" Foreground="#1F2937"/>
+                    <TextBlock Text="Нажмите кнопку «Добавить товар» чтобы создать первый товар" 
+                              TextWrapping="Wrap"
+                              TextAlignment="Center"
+                              Foreground="#6B7280"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
