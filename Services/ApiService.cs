@@ -18,7 +18,7 @@ namespace AvaloniaApplication1.Services
         {
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri("http://87.225.104.51:3000")
+                BaseAddress = new Uri("http://???????:3000")
             };
             
             _jsonOptions = new JsonSerializerOptions
