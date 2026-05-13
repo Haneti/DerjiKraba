@@ -43,5 +43,48 @@ namespace AvaloniaApplication1.Models
 
         public string DisplayPrice => $"{PricePerKg:F2} ₽/{(UnitType == "piece" ? "шт" : "кг")}";
         public string StockStatus => QuantityInStock > 0 ? $"В наличии: {QuantityInStock:F0} {UnitType}" : "Нет в наличии";
+        
+        /// <summary>
+        /// True if expiry date is within 14 days from today
+        /// </summary>
+        public bool IsExpiringSoon
+        {
+            get
+            {
+                if (!ExpiryDate.HasValue) return false;
+                var daysLeft = (ExpiryDate.Value.Date - DateTime.Today).TotalDays;
+                return daysLeft >= 0 && daysLeft < 14;
+            }
+        }
+
+        /// <summary>
+        /// Color for expiry warning: Green if hidden (already taken care of), Red if available
+        /// </summary>
+        public string ExpiryColor
+        {
+            get
+            {
+                if (!IsExpiringSoon) return "Transparent";
+                // If product is hidden, show green (it's already taken care of)
+                // If product is available, show red warning
+                return IsAvailable ? "#DC2626" : "#16A34A";
+            }
+        }
+
+        /// <summary>
+        /// Text for expiry warning
+        /// </summary>
+        public string ExpiryText
+        {
+            get
+            {
+                if (!IsExpiringSoon || !ExpiryDate.HasValue) return "";
+                var daysLeft = (ExpiryDate.Value.Date - DateTime.Today).TotalDays;
+                if (IsAvailable)
+                    return $"⚠ Срок: {daysLeft:F0} дн.";
+                else
+                    return $"✓ Скрыт: {daysLeft:F0} дн.";
+            }
+        }
     }
 }

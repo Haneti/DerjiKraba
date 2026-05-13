@@ -43,22 +43,51 @@ namespace AvaloniaApplication1.ViewModels
         [ObservableProperty]
         private int _normalCount;
         
+        [ObservableProperty]
+        private bool _showStatistics = false;
+        
+        [ObservableProperty]
+        private decimal _totalShortageValue;
+        
+        [ObservableProperty]
+        private decimal _totalSurplusValue;
+        
+        [ObservableProperty]
+        private decimal _totalDifferenceValue;
+        
+        [ObservableProperty]
+        private ObservableCollection<InventoryDifferenceItem> _differenceItems = new();
+        
+        [ObservableProperty]
+        private ObservableCollection<InventoryDifferenceItem> _shortageItems = new();
+        
+        [ObservableProperty]
+        private ObservableCollection<InventoryDifferenceItem> _surplusItems = new();
+        
+        public bool HasShortages => ShortagesCount > 0;
+        public bool HasSurpluses => SurplusesCount > 0;
+        public bool HasOnlySurpluses => HasSurpluses && !HasShortages;
+        public bool ShowShortageWarning => HasShortages;
+        public bool ShowSuccess => !HasShortages && !HasSurpluses;
+        
         public InventoryViewModel()
         {
             _apiService = new ApiService();
+            // Auto-load products on initialization (like mobile app)
+            _ = InitializeAsync();
         }
         
-        partial void OnSelectedFilterChanged(string value)
+        private async Task InitializeAsync()
         {
-            FilterItems();
+            await LoadProductsAsync();
         }
-        
-        public bool HasInventoryStarted => InventoryItems.Count > 0;
         
         [RelayCommand]
-        private async Task StartInventoryAsync()
+        private async Task LoadProductsAsync()
         {
-            Console.WriteLine("📋 Starting inventory...");
+            if (IsProcessing) return;
+            
+            Console.WriteLine("📋 Loading products for inventory...");
             IsProcessing = true;
             ErrorMessage = string.Empty;
             
@@ -76,24 +105,41 @@ namespace AvaloniaApplication1.ViewModels
                         Category = product.Category,
                         SystemQuantity = product.QuantityInStock,
                         ActualQuantity = product.QuantityInStock,
-                        UnitType = product.UnitType
+                        UnitType = product.UnitType,
+                        PricePerKg = product.PricePerKg
                     });
                 }
                 
                 UpdateCounts();
                 FilterItems();
+                OnPropertyChanged(nameof(HasInventoryStarted));
                 
                 Console.WriteLine($"✅ Loaded {InventoryItems.Count} items for inventory");
             }
             catch (Exception ex)
             {
                 ErrorMessage = $"Ошибка: {ex.Message}";
-                Console.WriteLine($"❌ Start inventory error: {ex.Message}");
+                Console.WriteLine($"❌ Load products error: {ex.Message}");
             }
             finally
             {
                 IsProcessing = false;
             }
+        }
+        
+        partial void OnSelectedFilterChanged(string value)
+        {
+            FilterItems();
+        }
+        
+        public bool HasInventoryStarted => InventoryItems.Count > 0;
+        
+        [RelayCommand]
+        private async Task StartInventoryAsync()
+        {
+            // Products already loaded on initialization
+            // This button now just refreshes the list
+            await LoadProductsAsync();
         }
         
         [RelayCommand]
@@ -109,6 +155,15 @@ namespace AvaloniaApplication1.ViewModels
         private void SetSelectedFilter(string filter)
         {
             SelectedFilter = filter;
+        }
+        
+        [RelayCommand]
+        private void CloseStatistics()
+        {
+            ShowStatistics = false;
+            InventoryItems.Clear();
+            FilteredItems.Clear();
+            OnPropertyChanged(nameof(HasInventoryStarted));
         }
         
         [RelayCommand]
@@ -160,9 +215,19 @@ namespace AvaloniaApplication1.ViewModels
                     Console.WriteLine("ℹ️ No adjustments needed");
                 }
                 
-                // Clear after finishing
-                InventoryItems.Clear();
-                FilteredItems.Clear();
+                // Calculate and show statistics
+                if (hasDifferences)
+                {
+                    CalculateStatistics();
+                    ShowStatistics = true;
+                }
+                else
+                {
+                    InventoryItems.Clear();
+                    FilteredItems.Clear();
+                    ShowStatistics = false;
+                }
+                OnPropertyChanged(nameof(HasInventoryStarted));
             }
             catch (Exception ex)
             {
@@ -213,6 +278,57 @@ namespace AvaloniaApplication1.ViewModels
             NormalCount = InventoryItems.Count(x => x.AdjustmentType == AdjustmentType.Normal);
         }
         
+        private void CalculateStatistics()
+        {
+            var differences = InventoryItems
+                .Where(x => Math.Abs(x.Difference) > 0.01m)
+                .ToList();
+            
+            TotalShortageValue = differences
+                .Where(x => x.Difference < 0)
+                .Sum(x => Math.Abs(x.Difference) * x.PricePerKg);
+            
+            TotalSurplusValue = differences
+                .Where(x => x.Difference > 0)
+                .Sum(x => x.Difference * x.PricePerKg);
+            
+            TotalDifferenceValue = TotalSurplusValue - TotalShortageValue;
+            
+            DifferenceItems.Clear();
+            ShortageItems.Clear();
+            SurplusItems.Clear();
+            
+            foreach (var item in differences.OrderBy(x => x.AdjustmentType).ThenBy(x => x.ProductName))
+            {
+                var diffItem = new InventoryDifferenceItem
+                {
+                    ProductName = item.ProductName,
+                    Category = item.Category,
+                    SystemQuantity = item.SystemQuantity,
+                    ActualQuantity = item.ActualQuantity,
+                    Difference = item.Difference,
+                    UnitType = item.UnitType,
+                    PricePerKg = item.PricePerKg,
+                    DifferenceValue = Math.Abs(item.Difference) * item.PricePerKg,
+                    AdjustmentType = item.AdjustmentType
+                };
+                
+                DifferenceItems.Add(diffItem);
+                
+                if (item.AdjustmentType == AdjustmentType.Shortage)
+                    ShortageItems.Add(diffItem);
+                else if (item.AdjustmentType == AdjustmentType.Surplus)
+                    SurplusItems.Add(diffItem);
+            }
+            
+            // Notify dependent properties
+            OnPropertyChanged(nameof(HasShortages));
+            OnPropertyChanged(nameof(HasSurpluses));
+            OnPropertyChanged(nameof(HasOnlySurpluses));
+            OnPropertyChanged(nameof(ShowShortageWarning));
+            OnPropertyChanged(nameof(ShowSuccess));
+        }
+        
         partial void OnInventoryItemsChanged(ObservableCollection<InventoryItemViewModel> value)
         {
             UpdateCounts();
@@ -245,6 +361,9 @@ namespace AvaloniaApplication1.ViewModels
         private string _unitType = "kg";
         
         [ObservableProperty]
+        private decimal _pricePerKg;
+        
+        [ObservableProperty]
         private bool _isEditing = false;
         
         public decimal Difference => ActualQuantity - SystemQuantity;
@@ -264,7 +383,21 @@ namespace AvaloniaApplication1.ViewModels
             get
             {
                 var sign = Difference >= 0 ? "+" : "";
-                return $"{sign}{Difference:F2} {UnitType}";
+                return $"{sign}{Difference:F3} {UnitType}";
+            }
+        }
+        
+        public string DisplayAdjustmentType
+        {
+            get
+            {
+                return AdjustmentType switch
+                {
+                    AdjustmentType.Shortage => "Недостача",
+                    AdjustmentType.Surplus => "Излишек",
+                    AdjustmentType.Normal => "В норме",
+                    _ => "В норме"
+                };
             }
         }
         
@@ -288,6 +421,56 @@ namespace AvaloniaApplication1.ViewModels
             OnPropertyChanged(nameof(DisplayDifference));
             OnPropertyChanged(nameof(DifferenceColor));
             OnPropertyChanged(nameof(AdjustmentType));
+            OnPropertyChanged(nameof(DisplayAdjustmentType));
         }
+    }
+    
+    public partial class InventoryStatisticsViewModel : ObservableObject
+    {
+        [ObservableProperty]
+        private int _totalItems;
+        
+        [ObservableProperty]
+        private int _shortagesCount;
+        
+        [ObservableProperty]
+        private int _surplusesCount;
+        
+        [ObservableProperty]
+        private decimal _totalShortageAmount;
+        
+        [ObservableProperty]
+        private decimal _totalSurplusAmount;
+    }
+    
+    /// <summary>
+    /// Item with difference for statistics display
+    /// </summary>
+    public class InventoryDifferenceItem
+    {
+        public string ProductName { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public decimal SystemQuantity { get; set; }
+        public decimal ActualQuantity { get; set; }
+        public decimal Difference { get; set; }
+        public string UnitType { get; set; } = "kg";
+        public decimal PricePerKg { get; set; }
+        public decimal DifferenceValue { get; set; }
+        public AdjustmentType AdjustmentType { get; set; }
+        
+        public string DisplayDifference => $"{(Difference >= 0 ? "+" : "")}{Difference:F3} {UnitType}";
+        public string DisplayValue => $"{DifferenceValue:F2} ₽";
+        public string DisplayType => AdjustmentType switch
+        {
+            AdjustmentType.Shortage => "Недостача",
+            AdjustmentType.Surplus => "Излишек",
+            _ => "В норме"
+        };
+        public string TypeColor => AdjustmentType switch
+        {
+            AdjustmentType.Shortage => "#DC2626",
+            AdjustmentType.Surplus => "#16A34A",
+            _ => "#6B7280"
+        };
     }
 }

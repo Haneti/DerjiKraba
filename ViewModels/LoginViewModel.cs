@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using AvaloniaApplication1.Models;
 using AvaloniaApplication1.Services;
@@ -24,8 +25,25 @@ namespace AvaloniaApplication1.ViewModels
         [ObservableProperty]
         private string _middleName = string.Empty;
         
-        [ObservableProperty]
         private string _verificationCode = string.Empty;
+        
+        public string VerificationCode
+        {
+            get => _verificationCode;
+            set
+            {
+                // Filter only digits, max 6 characters
+                var filtered = new string(value?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+                if (filtered.Length > 6)
+                    filtered = filtered.Substring(0, 6);
+                
+                if (_verificationCode != filtered)
+                {
+                    _verificationCode = filtered;
+                    OnPropertyChanged(nameof(VerificationCode));
+                }
+            }
+        }
         
         [ObservableProperty]
         private bool _isLoginMode = true;

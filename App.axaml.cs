@@ -4,6 +4,8 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform.Storage;
+using AvaloniaApplication1.Services;
 using AvaloniaApplication1.ViewModels;
 using AvaloniaApplication1.Views;
 
@@ -11,6 +13,9 @@ namespace AvaloniaApplication1
 {
     public partial class App : Application
     {
+        public static IStorageProvider? StorageProvider => 
+            (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow?.StorageProvider;
+
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -18,6 +23,9 @@ namespace AvaloniaApplication1
 
         public override void OnFrameworkInitializationCompleted()
         {
+            // Initialize ThemeManager
+            _ = ThemeManager.Instance;
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 

@@ -2,71 +2,99 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:AvaloniaApplication1.Controls"
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
              x:Class="AvaloniaApplication1.Views.SupportView">
 
-    <Grid ColumnDefinitions="300,*" Margin="20">
+    <Grid ColumnDefinitions="300,*" Margin="20,20,20,10">
         <!-- Conversations List -->
         <Border Grid.Column="0" 
-               BorderBrush="#E5E7EB" 
+               BorderBrush="{DynamicResource SystemBaseMediumLowColor}" 
                BorderThickness="1" 
                CornerRadius="5"
                Margin="0,0,10,0"
-               Background="White">
+               Background="{DynamicResource SystemAltHighColor}">
             <Grid RowDefinitions="Auto,*">
-                <TextBlock Grid.Row="0" 
-                          Text="💬 Чат поддержки" 
-                          FontSize="20" 
-                          FontWeight="Bold"
-                          Foreground="#1F2937"
-                          Margin="15"/>
-                
-                <Button Grid.Row="0" 
-                       Content="Обновить" 
-                       Command="{Binding LoadConversationsCommand}"
-                       HorizontalAlignment="Right"
-                       Margin="15"
-                       Classes="Primary"
-                       Background="#3B82F6"
-                       Foreground="White"/>
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                              Text="💬 Чат поддержки" 
+                              FontSize="20" 
+                              FontWeight="Bold"
+                              Foreground="{DynamicResource SystemBaseHighColor}"
+                              Margin="15"
+                              VerticalAlignment="Center"/>
+                    
+                    <Button Grid.Column="1"
+                           Content="🔄" 
+                           Command="{Binding LoadConversationsCommand}"
+                           Margin="10"
+                           Background="Transparent"
+                           Foreground="{DynamicResource SystemAccentColor}"
+                           FontSize="18"
+                           Padding="5"
+                           ToolTip.Tip="Обновить список"/>
+                </Grid>
 
-                <ListBox Grid.Row="1" 
+                <ListBox Grid.Row="1" Grid.ColumnSpan="2"
                         ItemsSource="{Binding Conversations}"
                         SelectedItem="{Binding SelectedConversation}"
                         SelectionMode="Single"
-                        Margin="10,0,10,10">
+                        Background="Transparent"
+                        Margin="0,5,0,10">
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem">
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Margin" Value="5,2"/>
+                        </Style>
+                    </ListBox.Styles>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Border Padding="10" Margin="5" CornerRadius="5" Background="#F9FAFB">
-                                <StackPanel Spacing="5">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Grid.Column="0" 
-                                                  Text="{Binding ClientName}" 
-                                                  FontWeight="Bold"
-                                                  TextWrapping="Wrap"/>
-                                        <TextBlock Grid.Column="1" 
-                                                  Text="{Binding LastMessageTime}" 
-                                                  Foreground="Gray"
-                                                  FontSize="12"/>
-                                    </Grid>
-                                    <TextBlock Text="{Binding LastMessagePreview}" 
-                                              TextWrapping="Wrap"
-                                              Foreground="Gray"
+                            <!-- Mobile-style row: status dot + name/phone/preview + date -->
+                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="10,8">
+                                <!-- Status dot (red if needs reply, gray otherwise) -->
+                                <Ellipse Grid.Column="0"
+                                        Width="10" Height="10"
+                                        Margin="0,6,12,0"
+                                        VerticalAlignment="Top"
+                                        Fill="{Binding StatusDotColor, Converter={StaticResource StringToBrushConverter}}"/>
+                                
+                                <!-- Name, phone, preview -->
+                                <StackPanel Grid.Column="1" Spacing="3">
+                                    <TextBlock Text="{Binding ClientName}" 
+                                              FontWeight="SemiBold"
+                                              FontSize="15"
+                                              Foreground="{DynamicResource SystemBaseHighColor}"
                                               TextTrimming="CharacterEllipsis"/>
-                                    
-                                    <StackPanel IsVisible="{Binding NeedsStaffReply}" 
-                                               Orientation="Horizontal"
-                                               Spacing="5">
-                                        <Border Background="#3B82F6" 
-                                               CornerRadius="3" 
-                                               Padding="5,2">
-                                            <TextBlock Text="Требует ответа" 
-                                                      FontSize="11" 
-                                                      Foreground="White"/>
-                                        </Border>
-                                    </StackPanel>
+                                    <TextBlock Text="{Binding FormattedPhone}" 
+                                              FontSize="11"
+                                              Foreground="{DynamicResource SystemBaseMediumColor}"
+                                              TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding LastMessagePreview}" 
+                                              FontSize="11"
+                                              Foreground="{DynamicResource SystemBaseMediumColor}"
+                                              TextTrimming="CharacterEllipsis"
+                                              MaxLines="1"/>
                                 </StackPanel>
-                            </Border>
+                                
+                                <!-- Date on the right -->
+                                <StackPanel Grid.Column="2" Spacing="4" Margin="8,0,0,0">
+                                    <TextBlock Text="{Binding LastMessageTime}" 
+                                              FontSize="10"
+                                              Foreground="{DynamicResource SystemBaseMediumColor}"
+                                              VerticalAlignment="Top"/>
+                                    <!-- Reply button for conversations needing staff reply -->
+                                    <Border IsVisible="{Binding NeedsStaffReply}"
+                                           Background="{StaticResource DangerBrush}"
+                                           CornerRadius="10"
+                                           Padding="6,2"
+                                           HorizontalAlignment="Right">
+                                        <TextBlock Text="Ответить" 
+                                                  FontSize="9"
+                                                  Foreground="White"
+                                                  FontWeight="SemiBold"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
@@ -75,95 +103,159 @@
 
         <!-- Chat Area -->
         <Border Grid.Column="1" 
-               BorderBrush="#E5E7EB" 
+               BorderBrush="{DynamicResource SystemBaseMediumLowColor}" 
                BorderThickness="1" 
                CornerRadius="5"
                Margin="10,0,0,0"
                IsVisible="{Binding HasSelectedConversation}">
             <Grid RowDefinitions="Auto,*,Auto">
-                <!-- Header - Light blue accent like mobile -->
+                <!-- Header - Fixed height and padding -->
                 <Border Grid.Row="0" 
-                       Background="#EFF6FF" 
-                       Padding="15"
-                       BorderBrush="#DBEAFE"
+                       Background="{DynamicResource SystemAltMediumColor}" 
+                       Padding="20,18"
+                       MinHeight="70"
+                       BorderBrush="{DynamicResource SystemBaseMediumLowColor}"
                        BorderThickness="0,0,0,1"
                        CornerRadius="5,5,0,0">
                     <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0">
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="{Binding SelectedConversation.ClientName}" 
-                                      FontSize="18" 
-                                      FontWeight="Bold"
-                                      Foreground="#1F2937"/>
-                            <TextBlock Text="{Binding SelectedConversation.ClientPhone}" 
-                                      Foreground="#6B7280"
+                                      FontSize="17" 
+                                      FontWeight="SemiBold"
+                                      Foreground="{DynamicResource SystemBaseHighColor}"
+                                      TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding SelectedConversation.FormattedPhone}" 
+                                      Foreground="{DynamicResource SystemBaseMediumColor}"
                                       FontSize="12"/>
                         </StackPanel>
                         <Button Grid.Column="1" 
-                               Content="Обновить" 
-                               Command="{Binding SelectConversationCommand}"
-                               CommandParameter="{Binding SelectedConversation}"
-                               Classes="Primary"
-                               Background="#3B82F6"
-                               Foreground="White"/>
+                               Content="🔄" 
+                               Command="{Binding RefreshMessagesCommand}"
+                               VerticalAlignment="Center"
+                               Background="Transparent"
+                               Foreground="{DynamicResource SystemAccentColor}"
+                               FontSize="20"
+                               Padding="8"
+                               ToolTip.Tip="Обновить сообщения"/>
                     </Grid>
                 </Border>
 
-                <!-- Messages -->
+                <!-- Messages - Messenger style: reversed order (newest at bottom), auto-scroll -->
                 <ScrollViewer Grid.Row="1" 
-                             Padding="15"
+                             x:Name="MessagesScrollViewer"
+                             Padding="15,15,15,80"
                              HorizontalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding Messages}">
+                    <ItemsControl ItemsSource="{Binding Messages}" x:Name="MessagesItemsControl">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <StackPanel Orientation="Vertical"/>
+                                <StackPanel Orientation="Vertical" Spacing="8" VerticalAlignment="Bottom"/>
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="0,5,0,5" 
-                                     ColumnDefinitions="*,Auto"
-                                     HorizontalAlignment="Right">
-                                    <Border Grid.Column="0"
-                                           Background="#DBEAFE"
-                                           CornerRadius="10"
-                                           Padding="12"
-                                           MaxWidth="400"
-                                           BorderThickness="1"
-                                           BorderBrush="#BFDBFE">
-                                        <StackPanel Spacing="5">
-                                            <TextBlock Text="{Binding Text}" 
-                                                      TextWrapping="Wrap"
-                                                      Foreground="#1F2937"/>
-                                            <TextBlock Text="{Binding Time}" 
-                                                      FontSize="11" 
-                                                      Foreground="#6B7280"
-                                                      HorizontalAlignment="Right"/>
-                                        </StackPanel>
-                                    </Border>
-                                </Grid>
+                                <!-- Messenger bubble style: Staff right (blue), Client left (gray) -->
+                                <Border Background="{Binding IsFromStaff, Converter={StaticResource BoolToBrushConverter}, ConverterParameter='StaffMessageBrush,ClientMessageBrush'}"
+                                       CornerRadius="12"
+                                       Padding="10"
+                                       MaxWidth="450"
+                                       HorizontalAlignment="{Binding IsFromStaff, Converter={StaticResource HorizontalAlignmentConverter}, ConverterParameter='Staff'}"
+                                       Margin="0,2">
+                                    <StackPanel Spacing="4">
+                                        <!-- Image from ImageURL with click to view -->
+                                        <Border IsVisible="{Binding HasImage}"
+                                                CornerRadius="8"
+                                                ClipToBounds="True"
+                                                MaxHeight="200"
+                                                Cursor="Hand"
+                                                PointerPressed="OnImagePointerPressed"
+                                                Tag="{Binding ImageURL}">
+                                            <controls:CachedImage SourceUrl="{Binding ImageURL}"
+                                                                 Stretch="Uniform"
+                                                                 MaxHeight="200"/>
+                                        </Border>
+                                        <!-- Image extracted from [[image]] markdown with click to view -->
+                                        <Border IsVisible="{Binding Text, Converter={StaticResource ImageUrlConverter}, ConverterParameter=Check}"
+                                                CornerRadius="8"
+                                                ClipToBounds="True"
+                                                MaxHeight="200"
+                                                Cursor="Hand"
+                                                PointerPressed="OnImagePointerPressed"
+                                                Tag="{Binding Text, Converter={StaticResource ImageUrlConverter}}">
+                                            <controls:CachedImage SourceUrl="{Binding Text, Converter={StaticResource ImageUrlConverter}}"
+                                                                 Stretch="Uniform"
+                                                                 MaxHeight="200"/>
+                                        </Border>
+                                        <SelectableTextBlock Text="{Binding Text, Converter={StaticResource RemoveImageMarkdownConverter}}" 
+                                                  TextWrapping="Wrap"
+                                                  FontSize="14"
+                                                  Foreground="{Binding IsFromStaff, Converter={StaticResource MessageForegroundConverter}}"
+                                                  IsVisible="{Binding Text, Converter={StaticResource RemoveImageMarkdownConverter}, Converter={StaticResource StringNotEmptyConverter}}"/>
+                                        <TextBlock Text="{Binding Time}" 
+                                                  FontSize="10" 
+                                                  Foreground="{Binding IsFromStaff, Converter={StaticResource MessageTimeForegroundConverter}}"
+                                                  Opacity="{Binding IsFromStaff, Converter={StaticResource BoolToOpacityConverter}}"
+                                                  HorizontalAlignment="Right"/>
+                                    </StackPanel>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
 
-                <!-- Message Input -->
+                <!-- Message Input with Image Support -->
                 <Border Grid.Row="2" 
                        Padding="15"
-                       BorderBrush="#DDD"
+                       BorderBrush="{DynamicResource SystemBaseMediumLowColor}"
                        BorderThickness="0,1,0,0"
                        CornerRadius="0,0,5,5">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <TextBox Grid.Column="0" 
-                                Text="{Binding MessageText}"
-                                Watermark="Введите сообщение..."
-                                AcceptsReturn="False"
-                                Margin="0,0,10,0"/>
-                        
-                        <Button Grid.Column="1" 
-                               Content="Отправить" 
-                               Command="{Binding SendMessageCommand}"
-                               Classes="Primary"
-                               IsEnabled="{Binding IsNotLoading}"/>
+                    <Grid RowDefinitions="Auto,Auto">
+                        <!-- Selected Image Preview -->
+                        <Border Grid.Row="0" 
+                                IsVisible="{Binding HasSelectedImage}"
+                                Margin="0,0,0,10"
+                                CornerRadius="8"
+                                ClipToBounds="True"
+                                HorizontalAlignment="Left"
+                                MaxHeight="100">
+                            <Grid>
+                                <controls:CachedImage SourceUrl="{Binding SelectedImagePath}"
+                                                     Stretch="Uniform"
+                                                     MaxHeight="100"/>
+                                <Button Command="{Binding ClearSelectedImageCommand}"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        Margin="5"
+                                        Padding="4"
+                                        Background="{StaticResource DangerBrush}"
+                                        Foreground="White"
+                                        FontSize="12">✕</Button>
+                            </Grid>
+                        </Border>
+                        <!-- Input Row -->
+                        <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto">
+                            <Button Grid.Column="0"
+                                    Content="📎"
+                                    Command="{Binding SelectImageCommand}"
+                                    Background="Transparent"
+                                    Padding="8"
+                                    FontSize="16"
+                                    Margin="0,0,10,0"/>
+                            <TextBox Grid.Column="1" 
+                                    x:Name="MessageTextBox"
+                                    Text="{Binding MessageText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Watermark="Введите сообщение..."
+                                    AcceptsReturn="False"
+                                    Margin="0,0,10,0"
+                                    KeyDown="OnMessageTextBoxKeyDown"/>
+                            <Button Grid.Column="2" 
+                                   Content="➤" 
+                                   Command="{Binding SendMessageCommand}"
+                                   Classes="Primary"
+                                   FontSize="16"
+                                   Padding="12,8"
+                                   IsEnabled="{Binding IsNotLoading}"
+                                   ToolTip.Tip="Отправить сообщение"/>
+                        </Grid>
                     </Grid>
                 </Border>
             </Grid>
@@ -171,16 +263,16 @@
 
         <!-- Empty State -->
         <Border Grid.Column="1" 
-               Background="#F9FAFB" 
+               Background="{DynamicResource SystemAltLowColor}" 
                CornerRadius="5"
                IsVisible="{Binding HasNoSelectedConversation}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
                 <TextBlock Text="💬" FontSize="48" HorizontalAlignment="Center"/>
-                <TextBlock Text="Выберите чат" FontSize="18" HorizontalAlignment="Center" Foreground="#1F2937"/>
+                <TextBlock Text="Выберите чат" FontSize="18" HorizontalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}"/>
                 <TextBlock Text="Выберите диалог из списка слева" 
                           TextWrapping="Wrap"
                           TextAlignment="Center"
-                          Foreground="#6B7280"/>
+                          Foreground="{DynamicResource SystemBaseMediumColor}"/>
             </StackPanel>
         </Border>
     </Grid>

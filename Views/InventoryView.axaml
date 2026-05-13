@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             xmlns:conv="using:AvaloniaApplication1.Converters"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
              x:Class="AvaloniaApplication1.Views.InventoryView">
 
     <Grid RowDefinitions="Auto,Auto,*" Margin="20">
@@ -11,33 +12,29 @@
             <TextBlock Text="📋 Инвентаризация" 
                       FontSize="24" 
                       FontWeight="Bold"
-                      Foreground="#1F2937"/>
+                      Foreground="{DynamicResource SystemBaseHighColor}"/>
             
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
-                <Button Content="Начать" 
+                <Button Content="🔄 Обновить" 
                        Command="{Binding StartInventoryCommand}"
-                       IsVisible="{Binding !HasInventoryStarted}"
                        Classes="Primary"
                        Background="#3B82F6"
                        Foreground="White"/>
                 
-                <StackPanel Orientation="Horizontal" Spacing="10"
-                           IsVisible="{Binding HasInventoryStarted}">
-                    <Button Content="Отмена" 
-                           Command="{Binding CancelInventoryCommand}"
-                           Background="#6B7280"
-                           Foreground="White"/>
-                    <Button Content="Завершить" 
-                           Command="{Binding FinishInventoryCommand}"
-                           Classes="Primary"
-                           Background="#3B82F6"
-                           Foreground="White"/>
-                </StackPanel>
+                <Button Content="❌ Отмена" 
+                       Command="{Binding CancelInventoryCommand}"
+                       Background="#6B7280"
+                       Foreground="White"/>
+                <Button Content="✓ Завершить" 
+                       Command="{Binding FinishInventoryCommand}"
+                       Classes="Primary"
+                       Background="#3B82F6"
+                       Foreground="White"/>
             </StackPanel>
         </Grid>
 
         <!-- Filter Chips -->
-        <Border Grid.Row="1" Background="White" CornerRadius="5" Padding="10" Margin="0,0,0,10">
+        <Border Grid.Row="1" Background="{DynamicResource SystemAltHighColor}" CornerRadius="5" Padding="10" Margin="0,0,0,10">
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <Button Content="Все" 
@@ -61,10 +58,10 @@
 
         <!-- Inventory List - Visible ONLY when inventory started -->
         <Border Grid.Row="2" 
-               BorderBrush="#E5E7EB" 
+               BorderBrush="{DynamicResource SystemBaseMediumLowColor}" 
                BorderThickness="1" 
                CornerRadius="5"
-               Background="White"
+               Background="{DynamicResource SystemAltHighColor}"
                IsVisible="{Binding HasInventoryStarted}">
             <DataGrid ItemsSource="{Binding FilteredItems}" 
                      AutoGenerateColumns="False"
@@ -76,39 +73,301 @@
                      Margin="0"
                      Background="Transparent">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Название" Binding="{Binding ProductName}" Width="*"/>
-                    <DataGridTextColumn Header="Категория" Binding="{Binding Category}" Width="150"/>
-                    <DataGridTextColumn Header="Система" Binding="{Binding SystemQuantity, StringFormat=F2}" Width="100"/>
-                    <DataGridTemplateColumn Header="Факт" Width="120">
+                    <DataGridTextColumn Header="Название" Binding="{Binding ProductName}" Width="250"/>
+                    <DataGridTextColumn Header="Категория" Binding="{Binding Category}" Width="120"/>
+                    <DataGridTextColumn Header="Система" Binding="{Binding SystemQuantity, StringFormat=F3}" Width="110"/>
+                    <DataGridTemplateColumn Header="Факт" Width="140">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <NumericUpDown Value="{Binding ActualQuantity}" 
-                                             FormatString="0.00"
+                                             FormatString="0.000"
                                              Minimum="0"
                                              Maximum="1000000"
                                              HorizontalAlignment="Stretch"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Разница" Binding="{Binding DisplayDifference}" Width="100"/>
-                    <DataGridTextColumn Header="Тип" Binding="{Binding AdjustmentType}" Width="100"/>
+                    <DataGridTextColumn Header="Разница" Binding="{Binding DisplayDifference}" Width="130"/>
+                    <DataGridTextColumn Header="Тип" Binding="{Binding DisplayAdjustmentType}" Width="110"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
 
         <!-- Empty State - Visible ONLY when inventory NOT started -->
         <Border Grid.Row="2" 
-               Background="#F9FAFB" 
+               Background="{DynamicResource SystemAltLowColor}" 
                CornerRadius="5"
                IsVisible="{Binding !HasInventoryStarted}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-                <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center"/>
-                <TextBlock Text="Инвентаризация не начата" FontSize="18" HorizontalAlignment="Center" Foreground="#1F2937"/>
-                <TextBlock Text="Нажмите кнопку «Начать» чтобы начать инвентаризацию" 
-                          TextWrapping="Wrap"
-                          TextAlignment="Center"
-                          Foreground="#6B7280"/>
+                <ProgressBar IsIndeterminate="True" Width="200" IsVisible="{Binding IsProcessing}"/>
+                <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center" IsVisible="{Binding !IsProcessing}"/>
+                <TextBlock Text="Загрузка товаров..." FontSize="18" HorizontalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}" IsVisible="{Binding IsProcessing}"/>
+                <TextBlock Text="Нет товаров для инвентаризации" FontSize="18" HorizontalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}" IsVisible="{Binding !IsProcessing}"/>
             </StackPanel>
+        </Border>
+        
+        <!-- Statistics Screen - Mobile app style (InventoryReportView) -->
+        <Border Grid.Row="2" 
+               Background="{DynamicResource SystemAltHighColor}" 
+               CornerRadius="5"
+               IsVisible="{Binding ShowStatistics}"
+               BorderBrush="{DynamicResource SystemBaseMediumLowColor}"
+               BorderThickness="1">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="20,15,20,5">
+                    <TextBlock Text="Отчет инвентаризации" 
+                              FontSize="20" 
+                              FontWeight="Bold"
+                              Foreground="{DynamicResource SystemBaseHighColor}"
+                              VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" 
+                           Content="Готово" 
+                           Command="{Binding CloseStatisticsCommand}"
+                           Background="Transparent"
+                           Foreground="#3B82F6"
+                           FontWeight="SemiBold"
+                           BorderThickness="0"/>
+                </Grid>
+                
+                <ScrollViewer Grid.Row="1" Padding="20">
+                    <StackPanel Spacing="20">
+                        <!-- 2x2 Summary Cards (like mobile SummaryCard grid) -->
+                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,*" RowSpacing="12" ColumnSpacing="12">
+                            <!-- Всего товаров (Blue) -->
+                            <Border Grid.Row="0" Grid.Column="0" 
+                                   Background="#1A007AFF" 
+                                   CornerRadius="12" Padding="12">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="⊞" FontSize="20" Foreground="#007AFF"/>
+                                    <TextBlock Text="{Binding TotalCount}" 
+                                              FontSize="22" FontWeight="Bold"
+                                              Foreground="{DynamicResource SystemBaseHighColor}"/>
+                                    <TextBlock Text="Всего товаров" FontSize="12" 
+                                              Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- В норме (Green) -->
+                            <Border Grid.Row="0" Grid.Column="1" 
+                                   Background="#1A34D399" 
+                                   CornerRadius="12" Padding="12">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="✓" FontSize="20" Foreground="#16A34A"/>
+                                    <TextBlock Text="{Binding NormalCount}" 
+                                              FontSize="22" FontWeight="Bold"
+                                              Foreground="{DynamicResource SystemBaseHighColor}"/>
+                                    <TextBlock Text="В норме" FontSize="12" 
+                                              Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- Недостачи (Red) -->
+                            <Border Grid.Row="1" Grid.Column="0" 
+                                   Background="#1AEF4444" 
+                                   CornerRadius="12" Padding="12">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="↓" FontSize="20" Foreground="#DC2626"/>
+                                    <TextBlock Text="{Binding ShortagesCount}" 
+                                              FontSize="22" FontWeight="Bold"
+                                              Foreground="{DynamicResource SystemBaseHighColor}"/>
+                                    <TextBlock Text="Недостачи" FontSize="12" 
+                                              Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- Излишки (Green) -->
+                            <Border Grid.Row="1" Grid.Column="1" 
+                                   Background="#1A34D399" 
+                                   CornerRadius="12" Padding="12">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="↑" FontSize="20" Foreground="#16A34A"/>
+                                    <TextBlock Text="{Binding SurplusesCount}" 
+                                              FontSize="22" FontWeight="Bold"
+                                              Foreground="{DynamicResource SystemBaseHighColor}"/>
+                                    <TextBlock Text="Излишки" FontSize="12" 
+                                              Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        
+                        <!-- Financial Summary (gray bg) -->
+                        <Border Background="{DynamicResource SystemAltLowColor}" 
+                               CornerRadius="12" 
+                               Padding="15">
+                            <StackPanel Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto" 
+                                     IsVisible="{Binding HasShortages}">
+                                    <TextBlock Text="Сумма недостач:" 
+                                              Foreground="{DynamicResource SystemBaseMediumColor}"
+                                              VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" 
+                                              Text="{Binding TotalShortageValue, StringFormat='{}-{0:F0} ₽'}" 
+                                              FontSize="18" FontWeight="Bold"
+                                              Foreground="#DC2626"/>
+                                </Grid>
+                                
+                                <Grid ColumnDefinitions="*,Auto" 
+                                     IsVisible="{Binding HasSurpluses}">
+                                    <TextBlock Text="Сумма излишков:" 
+                                              Foreground="{DynamicResource SystemBaseMediumColor}"
+                                              VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" 
+                                              Text="{Binding TotalSurplusValue, StringFormat='{}+{0:F0} ₽'}" 
+                                              FontSize="18" FontWeight="Bold"
+                                              Foreground="#16A34A"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Shortages Section (red bg, light) -->
+                        <Border Background="#0DDC2626" 
+                               CornerRadius="12" 
+                               Padding="15"
+                               IsVisible="{Binding HasShortages}">
+                            <StackPanel Spacing="12">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="↓" FontSize="16" Foreground="#DC2626" FontWeight="Bold"/>
+                                    <TextBlock Text="Недостачи" FontSize="15" FontWeight="SemiBold" Foreground="#DC2626"/>
+                                </StackPanel>
+                                
+                                <ItemsControl ItemsSource="{Binding ShortageItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{DynamicResource SystemAltHighColor}" 
+                                                   CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                                                <StackPanel Spacing="6">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <StackPanel Grid.Column="0" Spacing="2">
+                                                            <TextBlock Text="{Binding ProductName}" 
+                                                                      FontWeight="SemiBold" FontSize="14"
+                                                                      Foreground="{DynamicResource SystemBaseHighColor}"/>
+                                                            <TextBlock Text="{Binding SystemQuantity, StringFormat='{}Система: {0:F3} кг'}" 
+                                                                      FontSize="11" 
+                                                                      Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="2">
+                                                            <TextBlock Text="{Binding ActualQuantity, StringFormat='{}Факт: {0:F3} кг'}" 
+                                                                      FontSize="11" FontWeight="SemiBold"
+                                                                      Foreground="#DC2626"/>
+                                                            <TextBlock Text="{Binding DisplayDifference}" 
+                                                                      FontSize="12" FontWeight="Bold"
+                                                                      Foreground="#DC2626"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding DisplayValue, StringFormat='{}Сумма: {0}'}" 
+                                                              FontSize="11"
+                                                              Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Surpluses Section (green bg, light) -->
+                        <Border Background="#0D16A34A" 
+                               CornerRadius="12" 
+                               Padding="15"
+                               IsVisible="{Binding HasSurpluses}">
+                            <StackPanel Spacing="12">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="↑" FontSize="16" Foreground="#16A34A" FontWeight="Bold"/>
+                                    <TextBlock Text="Излишки" FontSize="15" FontWeight="SemiBold" Foreground="#16A34A"/>
+                                </StackPanel>
+                                
+                                <ItemsControl ItemsSource="{Binding SurplusItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{DynamicResource SystemAltHighColor}" 
+                                                   CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                                                <StackPanel Spacing="6">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <StackPanel Grid.Column="0" Spacing="2">
+                                                            <TextBlock Text="{Binding ProductName}" 
+                                                                      FontWeight="SemiBold" FontSize="14"
+                                                                      Foreground="{DynamicResource SystemBaseHighColor}"/>
+                                                            <TextBlock Text="{Binding SystemQuantity, StringFormat='{}Система: {0:F3} кг'}" 
+                                                                      FontSize="11" 
+                                                                      Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="2">
+                                                            <TextBlock Text="{Binding ActualQuantity, StringFormat='{}Факт: {0:F3} кг'}" 
+                                                                      FontSize="11" FontWeight="SemiBold"
+                                                                      Foreground="#16A34A"/>
+                                                            <TextBlock Text="{Binding DisplayDifference}" 
+                                                                      FontSize="12" FontWeight="Bold"
+                                                                      Foreground="#16A34A"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding DisplayValue, StringFormat='{}Сумма: {0}'}" 
+                                                              FontSize="11"
+                                                              Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Final Status: Success (green) -->
+                        <StackPanel Spacing="15" Margin="0,20,0,0"
+                                   HorizontalAlignment="Center"
+                                   IsVisible="{Binding ShowSuccess}">
+                            <TextBlock Text="✓" FontSize="60" 
+                                      HorizontalAlignment="Center"
+                                      Foreground="#16A34A"/>
+                            <TextBlock Text="Всё в порядке!" 
+                                      FontSize="20" FontWeight="Bold"
+                                      HorizontalAlignment="Center"
+                                      Foreground="{DynamicResource SystemBaseHighColor}"/>
+                            <TextBlock Text="Расхождений не обнаружено. Все товары соответствуют учетным данным." 
+                                      FontSize="13"
+                                      TextWrapping="Wrap" TextAlignment="Center"
+                                      MaxWidth="350"
+                                      Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                        </StackPanel>
+                        
+                        <!-- Final Status: Surplus Only (yellow) -->
+                        <StackPanel Spacing="15" Margin="0,20,0,0"
+                                   HorizontalAlignment="Center"
+                                   IsVisible="{Binding HasOnlySurpluses}">
+                            <TextBlock Text="✓" FontSize="60" 
+                                      HorizontalAlignment="Center"
+                                      Foreground="#FBBF24"/>
+                            <TextBlock Text="Что-то не так!" 
+                                      FontSize="20" FontWeight="Bold"
+                                      HorizontalAlignment="Center"
+                                      Foreground="{DynamicResource SystemBaseHighColor}"/>
+                            <TextBlock Text="{Binding SurplusesCount, StringFormat='{}Инвентаризация закрыта с расхождением.&#10;Обнаружен излишек товара ({0} поз.).'}" 
+                                      FontSize="13"
+                                      TextWrapping="Wrap" TextAlignment="Center"
+                                      MaxWidth="350"
+                                      Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                        </StackPanel>
+                        
+                        <!-- Final Status: Shortage Warning (red X) -->
+                        <StackPanel Spacing="15" Margin="0,20,0,0"
+                                   HorizontalAlignment="Center"
+                                   IsVisible="{Binding ShowShortageWarning}">
+                            <TextBlock Text="✕" FontSize="60" 
+                                      HorizontalAlignment="Center"
+                                      Foreground="#DC2626"/>
+                            <TextBlock Text="Что-то не так!" 
+                                      FontSize="20" FontWeight="Bold"
+                                      HorizontalAlignment="Center"
+                                      Foreground="{DynamicResource SystemBaseHighColor}"/>
+                            <TextBlock Text="Инвентаризация закрыта с расхождением. Обнаружены недостачи товаров." 
+                                      FontSize="13"
+                                      TextWrapping="Wrap" TextAlignment="Center"
+                                      MaxWidth="350"
+                                      Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

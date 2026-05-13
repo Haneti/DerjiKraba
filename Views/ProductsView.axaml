@@ -19,7 +19,7 @@
             <TextBlock Text="📦 Управление товарами" 
                       FontSize="24" 
                       FontWeight="Bold"
-                      Foreground="#1F2937"/>
+                      Foreground="{DynamicResource SystemBaseHighColor}"/>
             
             <Button Grid.Column="1" 
                    Content="+ Добавить товар" 
@@ -30,14 +30,14 @@
         </Grid>
 
         <!-- Main Content - Clean white background -->
-        <Grid Grid.Row="1" ColumnDefinitions="*,350">
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
             <!-- Products Gallery List -->
             <Border Grid.Column="0" 
-                   BorderBrush="#E5E7EB" 
+                   BorderBrush="{DynamicResource SystemBaseMediumLowColor}" 
                    BorderThickness="1" 
                    CornerRadius="5"
                    Margin="0,0,10,0"
-                   Background="White">
+                   Background="{DynamicResource SystemAltHighColor}">
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding Products}">
                         <ItemsControl.ItemsPanel>
@@ -47,18 +47,20 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Width="220" Height="280" Margin="8" 
+                                <Border Width="220" Height="360" Margin="8" 
                                         CornerRadius="8" BorderThickness="2"
-                                        Background="White" BoxShadow="0 2 4 #20000000"
+                                        BorderBrush="Transparent"
+                                        Background="{DynamicResource SystemAltHighColor}" BoxShadow="0 2 4 #20000000"
                                         Cursor="Hand">
                                     <Border.Styles>
                                         <Style Selector="Border:pointerover">
                                             <Setter Property="BorderBrush" Value="#3B82F6"/>
                                         </Style>
                                     </Border.Styles>
-                                    <StackPanel Spacing="8" Margin="12">
+                                    <!-- Grid: image / info / expiry / button (fixed bottom) -->
+                                    <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="12">
                                         <!-- Product Image -->
-                                        <Border Width="196" Height="160" CornerRadius="6" Background="#DBEAFE" ClipToBounds="True">
+                                        <Border Grid.Row="0" Width="196" Height="160" CornerRadius="6" Background="#DBEAFE" ClipToBounds="True">
                                             <controls:CachedImage 
                                                 SourceUrl="{Binding ImageURL}" 
                                                 ImageHash="{Binding ImageHash}"
@@ -66,36 +68,48 @@
                                                 Stretch="UniformToFill"/>
                                         </Border>
                                         
-                                        <!-- Product Info -->
-                                        <StackPanel Spacing="4">
+                                        <!-- Product Info (flexible space) -->
+                                        <StackPanel Grid.Row="1" Spacing="4" Margin="0,8,0,0">
                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" 
-                                                       TextWrapping="Wrap" MaxLines="2" Foreground="#1F2937"/>
-                                            <TextBlock Text="{Binding Category}" FontSize="12" Foreground="#6B7280"
+                                                       TextWrapping="Wrap" MaxLines="2" 
+                                                       Foreground="{DynamicResource SystemBaseHighColor}"/>
+                                            <TextBlock Text="{Binding Category}" FontSize="12" 
+                                                       Foreground="{DynamicResource SystemBaseMediumColor}"
                                                        TextWrapping="NoWrap"/>
+                                            <TextBlock Text="{Binding DisplayPrice}" FontWeight="Bold" FontSize="14" 
+                                                       Foreground="{DynamicResource SystemAccentColor}"/>
                                             
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Text="{Binding DisplayPrice}" FontWeight="Bold" FontSize="14" 
-                                                           Foreground="#3B82F6"/>
-                                                <TextBlock Text="{Binding StockStatus}" FontSize="11" Foreground="#6B7280" 
-                                                           Grid.Column="1" TextAlignment="Right"/>
-                                            </Grid>
-                                            
-                                            <Border IsVisible="{Binding !IsAvailable}" Background="#F3F4F6" 
+                                            <!-- Hidden badge -->
+                                            <Border IsVisible="{Binding !IsAvailable}" 
+                                                    Background="{DynamicResource SystemAltLowColor}" 
                                                     CornerRadius="4" Padding="4,2" HorizontalAlignment="Left">
-                                                <TextBlock Text="Скрыт" FontSize="11" Foreground="#6B7280"/>
+                                                <TextBlock Text="Скрыт" FontSize="11" 
+                                                           Foreground="{DynamicResource SystemBaseMediumColor}"/>
                                             </Border>
-                                            
-                                            <!-- Edit Button - Visible for staff only -->
-                                            <Button Content="✏️ Ред." 
-                                                    Command="{Binding $parent[ItemsControl].DataContext.StartEditCommand}"
-                                                    CommandParameter="{Binding}"
-                                                    Classes="Primary"
-                                                    HorizontalAlignment="Left"
-                                                    Margin="0,5,0,0"
-                                                    Padding="8,4"
-                                                    FontSize="12"/>
                                         </StackPanel>
-                                    </StackPanel>
+                                        
+                                        <!-- Stock status + expiry warning (fixed above button) -->
+                                        <StackPanel Grid.Row="2" Spacing="2" Margin="0,4,0,4">
+                                            <TextBlock Text="{Binding StockStatus}" FontSize="11" 
+                                                       Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                                            <TextBlock Text="{Binding ExpiryText}" 
+                                                       FontSize="11"
+                                                       FontWeight="Bold"
+                                                       Foreground="{Binding ExpiryColor}"
+                                                       IsVisible="{Binding IsExpiringSoon}"/>
+                                        </StackPanel>
+                                        
+                                        <!-- Edit Button - FIXED at bottom of card -->
+                                        <Button Grid.Row="3"
+                                                Content="✏️ Редактировать" 
+                                                Command="{Binding $parent[ItemsControl].DataContext.StartEditCommand}"
+                                                CommandParameter="{Binding}"
+                                                Classes="Primary"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                Padding="8,6"
+                                                FontSize="12"/>
+                                    </Grid>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -103,9 +117,9 @@
                 </ScrollViewer>
             </Border>
 
-            <!-- Edit/Create Panel - Light blue accent like mobile -->
+            <!-- Edit/Create Panel - Theme aware -->
             <Border Grid.Column="1" 
-                   Background="#EFF6FF" 
+                   Background="{DynamicResource SystemAltMediumColor}" 
                    CornerRadius="5" 
                    Padding="15"
                    IsVisible="{Binding IsEditing}">
@@ -115,7 +129,7 @@
                                   FontSize="18" 
                                   FontWeight="Bold"
                                   HorizontalAlignment="Center"
-                                  Foreground="#1F2937"/>
+                                  Foreground="{DynamicResource SystemBaseHighColor}"/>
 
                         <TextBox Watermark="Название*" Text="{Binding ProductName}"/>
                         <TextBox Watermark="Категория*" Text="{Binding Category}"/>
@@ -125,43 +139,37 @@
                                       Minimum="0"
                                       Maximum="1000000"
                                       Watermark="Цена за кг"
-                                      Background="White"
-                                      Foreground="#1F2937"/>
+                                      Background="{DynamicResource SystemAltHighColor}"
+                                      Foreground="{DynamicResource SystemBaseHighColor}"/>
                         
                         <NumericUpDown Value="{Binding QuantityInStock}" 
                                       FormatString="0"
                                       Minimum="0"
                                       Maximum="1000000"
                                       Watermark="Количество"
-                                      Background="White"
-                                      Foreground="#1F2937"/>
+                                      Background="{DynamicResource SystemAltHighColor}"
+                                      Foreground="{DynamicResource SystemBaseHighColor}"/>
                         
-                        <DatePicker SelectedDate="{Binding DeliveryDate}"
-                                   Background="White"
-                                   Foreground="#1F2937"/>
+                        <DatePicker SelectedDate="{Binding DeliveryDate, Converter={StaticResource DateTimeToDateTimeOffsetConverter}}"/>
                         
-                        <DatePicker SelectedDate="{Binding ExpiryDate}"
-                                   Background="White"
-                                   Foreground="#1F2937"/>
+                        <DatePicker SelectedDate="{Binding ExpiryDate, Converter={StaticResource DateTimeToDateTimeOffsetConverter}}"/>
                         
                         <TextBox Watermark="Описание" 
                                 Text="{Binding Description}"
                                 AcceptsReturn="True"
                                 TextWrapping="Wrap"
-                                Height="80"
-                                Background="White"
-                                Foreground="#1F2937"/>
+                                Height="80"/>
                         
                         <CheckBox Content="Доступен для заказа" 
                                  IsChecked="{Binding IsAvailable}"
-                                 Foreground="#1F2937"/>
+                                 Foreground="{DynamicResource SystemBaseHighColor}"/>
                         
                         <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="Ед. измерения:" VerticalAlignment="Center" Foreground="#1F2937"/>
-                            <ComboBox SelectedItem="{Binding UnitType}" MinWidth="100">
+                            <TextBlock Text="Ед. измерения:" VerticalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}"/>
+                            <ComboBox SelectedItem="{Binding UnitType, Converter={StaticResource UnitDisplayConverter}}" MinWidth="100">
                                 <ComboBox.Items>
-                                    <system:String>kg</system:String>
-                                    <system:String>piece</system:String>
+                                    <system:String>кг</system:String>
+                                    <system:String>шт</system:String>
                                 </ComboBox.Items>
                             </ComboBox>
                         </StackPanel>
@@ -196,16 +204,16 @@
 
             <!-- Empty State -->
             <Border Grid.Column="0" 
-                   Background="#F9FAFB" 
+                   Background="{DynamicResource SystemAltLowColor}" 
                    CornerRadius="5"
                    IsVisible="{Binding !HasProducts}">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
                     <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Нет товаров" FontSize="18" HorizontalAlignment="Center" Foreground="#1F2937"/>
+                    <TextBlock Text="Нет товаров" FontSize="18" HorizontalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}"/>
                     <TextBlock Text="Нажмите кнопку «Добавить товар» чтобы создать первый товар" 
                               TextWrapping="Wrap"
                               TextAlignment="Center"
-                              Foreground="#6B7280"/>
+                              Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </StackPanel>
             </Border>
         </Grid>

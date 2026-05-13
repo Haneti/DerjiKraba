@@ -19,7 +19,36 @@ namespace AvaloniaApplication1.ViewModels
         private ObservableCollection<User> _allUsers = new();
 
         [ObservableProperty]
+        private ObservableCollection<User> _filteredUsers = new();
+
+        [ObservableProperty]
         private User? _selectedUser;
+
+        [ObservableProperty]
+        private string _searchText = string.Empty;
+
+        partial void OnSearchTextChanged(string value)
+        {
+            ApplyFilter();
+        }
+
+        private void ApplyFilter()
+        {
+            if (string.IsNullOrWhiteSpace(SearchText))
+            {
+                FilteredUsers = new ObservableCollection<User>(AllUsers);
+            }
+            else
+            {
+                var searchLower = SearchText.ToLower();
+                var filtered = AllUsers.Where(u => 
+                    (u.Phone?.ToLower().Contains(searchLower) == true) ||
+                    (u.FullName?.ToLower().Contains(searchLower) == true) ||
+                    (u.Role?.ToLower().Contains(searchLower) == true)
+                ).ToList();
+                FilteredUsers = new ObservableCollection<User>(filtered);
+            }
+        }
 
         [ObservableProperty]
         private string _newPhone = string.Empty;
@@ -67,6 +96,9 @@ namespace AvaloniaApplication1.ViewModels
                 {
                     AllUsers.Add(user);
                 }
+                
+                // Apply current filter
+                ApplyFilter();
 
                 Console.WriteLine($"✅ Loaded {AllUsers.Count} users for staff management");
             }
@@ -143,6 +175,7 @@ namespace AvaloniaApplication1.ViewModels
                 {
                     Console.WriteLine($"✅ Staff account created: {newUser.FullName} ({newUser.Phone}), Role: {newUser.Role}");
                     AllUsers.Add(newUser);
+                    ApplyFilter(); // Refresh filtered list
                     IsCreatingNew = false;
                     ClearNewUserForm();
                 }
@@ -224,10 +257,17 @@ namespace AvaloniaApplication1.ViewModels
                     var index = AllUsers.IndexOf(SelectedUser);
                     if (index >= 0)
                     {
+                        var updatedUser = SelectedUser;
                         AllUsers.RemoveAt(index);
-                        SelectedUser.Role = newRole;
-                        AllUsers.Insert(index, SelectedUser);
+                        updatedUser.Role = newRole;
+                        AllUsers.Insert(index, updatedUser);
                     }
+                    
+                    // Refresh filtered list immediately
+                    ApplyFilter();
+                    
+                    // Force UI update
+                    OnPropertyChanged(nameof(FilteredUsers));
                     
                     SelectedUser = null; // Deselect after update
                 }
@@ -251,6 +291,52 @@ namespace AvaloniaApplication1.ViewModels
         private void RefreshUsers()
         {
             _ = LoadAllUsersAsync();
+        }
+
+        [RelayCommand]
+        private async Task DeleteUserAsync()
+        {
+            if (SelectedUser == null)
+            {
+                ErrorMessage = "Выберите пользователя для удаления";
+                return;
+            }
+
+            // Prevent deleting yourself
+            if (SelectedUser.Id == _currentUser.Id)
+            {
+                ErrorMessage = "Нельзя удалить самого себя";
+                return;
+            }
+
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+
+            try
+            {
+                var success = await _apiService.DeleteUserAsync(SelectedUser.Id);
+
+                if (success)
+                {
+                    Console.WriteLine($"✅ User deleted: {SelectedUser.FullName} ({SelectedUser.Phone})");
+                    AllUsers.Remove(SelectedUser);
+                    ApplyFilter();
+                    SelectedUser = null;
+                }
+                else
+                {
+                    ErrorMessage = "Ошибка при удалении пользователя";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Delete user error: {ex.Message}");
+                ErrorMessage = $"Ошибка: {ex.Message}";
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
     }
 }

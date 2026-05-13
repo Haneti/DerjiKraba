@@ -17,9 +17,9 @@
     </Design.DataContext>
 
     <Grid RowDefinitions="Auto,*">
-        <!-- Top Bar - Matching iOS blue header with white text -->
+        <!-- Top Bar - Uses system accent color -->
         <Border Grid.Row="0" 
-               Background="#3B82F6" 
+               Background="{DynamicResource SystemAccentColor}"
                Padding="15,10">
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="15">
@@ -27,36 +27,35 @@
                     <Button Content="📦 Товары" 
                            Command="{Binding NavigateToProductsCommand}"
                            IsVisible="{Binding ShowProducts}"
-                           Classes="Primary"
-                           Background="#3B82F6"
+                           Background="{DynamicResource SystemAccentColor}"
                            Foreground="White"/>
                     
                     <Button Content="🛒 Заказы" 
                            Command="{Binding NavigateToOrdersCommand}"
                            IsVisible="{Binding ShowOrders}"
-                           Background="#3B82F6"
+                           Background="{DynamicResource SystemAccentColor}"
                            Foreground="White"/>
                     
                     <Button Content="📋 Инвентаризация" 
                            Command="{Binding NavigateToInventoryCommand}"
                            IsVisible="{Binding ShowInventory}"
-                           Background="#3B82F6"
+                           Background="{DynamicResource SystemAccentColor}"
                            Foreground="White"/>
                     
                     <Button Content="💬 Поддержка" 
                            Command="{Binding NavigateToSupportCommand}"
                            IsVisible="{Binding ShowSupport}"
-                           Background="#3B82F6"
+                           Background="{DynamicResource SystemAccentColor}"
                            Foreground="White"/>
                     
                     <Button Content="👥 Сотрудники" 
                            Command="{Binding NavigateToStaffCommand}"
                            IsVisible="{Binding ShowStaffManagement}"
-                           Background="#3B82F6"
+                           Background="{DynamicResource SystemAccentColor}"
                            Foreground="White"/>
                 </StackPanel>
 
-                <!-- User Info and Logout -->
+                <!-- User Info, Theme Toggle and Logout -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="15" VerticalAlignment="Center">
                     <TextBlock Text="{Binding CurrentUser.FullName}" 
                               Foreground="White" 
@@ -65,21 +64,39 @@
                               VerticalAlignment="Center"
                               IsVisible="{Binding IsLoggedIn}"/>
                     
+                    <!-- Theme Toggle Button - Compact size -->
+                    <Button Command="{Binding ToggleThemeCommand}"
+                           VerticalAlignment="Center"
+                           Background="Transparent"
+                           Foreground="White"
+                           Padding="2,1"
+                           FontSize="10"
+                           Width="24"
+                           Height="24">
+                        <TextBlock Text="{Binding IsDarkMode, Converter={StaticResource ThemeIconConverter}}"
+                                  FontSize="12"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"/>
+                    </Button>
+                    
                     <Button Content="Выход" 
                            Command="{Binding LogoutCommand}"
                            IsVisible="{Binding IsLoggedIn}"
-                           Background="#2563EB"
-                           Foreground="White"/>
+                           Background="{DynamicResource SystemAltMediumColor}"
+                           Foreground="{DynamicResource SystemBaseHighColor}"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Content Area - Clean white background like mobile app -->
-        <Border Grid.Row="1" Background="White">
+        <!-- Content Area - Uses system theme background -->
+        <Border Grid.Row="1" 
+               Background="{DynamicResource SystemBaseLowColor}">
             <Grid>
-                <!-- Current View Content -->
+                <!-- Current View Content - constrained to available space -->
                 <ContentControl Content="{Binding CurrentView}" 
-                               Margin="0,50,0,0"/>
+                               Margin="0,10,0,10"
+                               VerticalAlignment="Stretch"
+                               HorizontalAlignment="Stretch"/>
             </Grid>
         </Border>
     </Grid>

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace AvaloniaApplication1.Models
@@ -37,6 +38,26 @@ namespace AvaloniaApplication1.Models
         }
 
         public string LastMessageTime => LastMessageAt?.ToString("dd.MM.yyyy HH:mm") ?? "";
+        
+        /// <summary>
+        /// Status indicator color: red if needs reply, gray otherwise (mobile style)
+        /// </summary>
+        public string StatusDotColor => NeedsStaffReply ? "#EF4444" : "#9CA3AF";
+        
+        /// <summary>
+        /// Formatted phone for display: +7 (XXX) XXX-XX-XX
+        /// </summary>
+        public string FormattedPhone
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(ClientPhone)) return "";
+                var digits = new string(ClientPhone.Where(char.IsDigit).ToArray());
+                if (digits.Length == 11 && (digits[0] == '7' || digits[0] == '8'))
+                    return $"+7 ({digits.Substring(1, 3)}) {digits.Substring(4, 3)}-{digits.Substring(7, 2)}-{digits.Substring(9, 2)}";
+                return ClientPhone;
+            }
+        }
     }
 
     public class SupportMessage
@@ -59,7 +80,11 @@ namespace AvaloniaApplication1.Models
         [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
 
-        public bool IsFromStaff => SenderRole == "employee" || SenderRole == "admin";
+        [JsonPropertyName("imageURL")]
+        public string? ImageURL { get; set; }
+
+        public bool IsFromStaff => SenderRole == "employee" || SenderRole == "admin" || SenderRole == "owner";
+        public bool HasImage => !string.IsNullOrEmpty(ImageURL);
         public string Time => CreatedAt.ToString("HH:mm");
     }
 }

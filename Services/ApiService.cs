@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
@@ -18,7 +19,7 @@ namespace AvaloniaApplication1.Services
         {
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri("http://???????:3000")
+                BaseAddress = new Uri("http://87.225.104.51:3000")
             };
             
             _jsonOptions = new JsonSerializerOptions
@@ -418,12 +419,13 @@ namespace AvaloniaApplication1.Services
             }
         }
 
-        public async Task<bool> SendMessageAsync(string clientPhone, string senderPhone, string text)
+        public async Task<bool> SendMessageAsync(string clientPhone, string senderPhone, string text, string? imageUrl = null)
         {
             try
             {
+                var payload = new { clientPhone, senderPhone, text, imageURL = imageUrl };
                 var content = new StringContent(
-                    JsonSerializer.Serialize(new { clientPhone, senderPhone, text }),
+                    JsonSerializer.Serialize(payload),
                     Encoding.UTF8,
                     "application/json"
                 );
@@ -436,6 +438,52 @@ namespace AvaloniaApplication1.Services
                 Console.WriteLine($"Send message error: {ex.Message}");
                 return false;
             }
+        }
+
+        public async Task<string?> UploadImageAsync(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath))
+                {
+                    Console.WriteLine($"❌ File not found: {filePath}");
+                    return null;
+                }
+
+                var fileName = Path.GetFileName(filePath);
+                var fileBytes = await File.ReadAllBytesAsync(filePath);
+                
+                using var content = new MultipartFormDataContent();
+                using var fileContent = new ByteArrayContent(fileBytes);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+                content.Add(fileContent, "image", fileName);
+
+                var response = await _httpClient.PostAsync("/upload", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<UploadResponse>(_jsonOptions);
+                    Console.WriteLine($"✅ Image uploaded: {result?.Url}");
+                    return result?.Url;
+                }
+                else
+                {
+                    Console.WriteLine($"❌ Image upload failed: {response.StatusCode}");
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error: {error}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Upload image error: {ex.Message}");
+                return null;
+            }
+        }
+
+        private class UploadResponse
+        {
+            public string? Url { get; set; }
         }
 
         #endregion
@@ -523,6 +571,34 @@ namespace AvaloniaApplication1.Services
             {
                 Console.WriteLine($"❌ Update role error: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteUserAsync(string userId)
+        {
+            try
+            {
+                Console.WriteLine($"🗑️ Deleting user {userId}");
+                
+                var response = await _httpClient.DeleteAsync($"/users/{userId}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"✅ User deleted successfully");
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine($"❌ Delete user failed: {response.StatusCode}");
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error details: {errorContent}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Delete user error: {ex.Message}");
                 return false;
             }
         }

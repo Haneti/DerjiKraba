@@ -1,0 +1,53 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="AvaloniaApplication1.Views.ImageViewerWindow"
+        Title="Просмотр изображения"
+        Width="800"
+        Height="600"
+        Background="Black"
+        WindowStartupLocation="CenterScreen">
+    
+    <Grid>
+        <!-- Image with zoom support -->
+        <ScrollViewer x:Name="ImageScrollViewer"
+                     HorizontalScrollBarVisibility="Auto"
+                     VerticalScrollBarVisibility="Auto"
+                     Background="Black">
+            <Image x:Name="ViewerImage"
+                   Stretch="None"
+                   RenderTransformOrigin="0.5,0.5"/>
+        </ScrollViewer>
+        
+        <!-- Close button -->
+        <Button Content="✕"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="10"
+                Background="#80000000"
+                Foreground="White"
+                FontSize="20"
+                Padding="10,5"
+                Click="CloseButton_Click"/>
+        
+        <!-- Zoom info -->
+        <TextBlock x:Name="ZoomInfo"
+                  Text="100%"
+                  HorizontalAlignment="Left"
+                  VerticalAlignment="Top"
+                  Margin="10"
+                  Foreground="White"
+                  Background="#80000000"
+                  Padding="5,2"
+                  FontSize="14"/>
+        
+        <!-- Instructions -->
+        <TextBlock Text="Ctrl + колесо мыши: масштаб | ЛКМ: перетаскивание"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Bottom"
+                  Margin="0,0,0,10"
+                  Foreground="White"
+                  Background="#80000000"
+                  Padding="10,5"
+                  FontSize="12"/>
+    </Grid>
+</Window>

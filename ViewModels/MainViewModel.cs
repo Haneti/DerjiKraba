@@ -1,5 +1,6 @@
 using System;
 using AvaloniaApplication1.Models;
+using AvaloniaApplication1.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -34,10 +35,20 @@ namespace AvaloniaApplication1.ViewModels
         [ObservableProperty]
         private bool _showStaffManagement = false;
 
+        [ObservableProperty]
+        private bool _isDarkMode = false;
+
         public MainViewModel()
         {
             CurrentView = new LoginViewModel();
             CurrentViewTitle = "Вход";
+            
+            // Initialize theme
+            IsDarkMode = ThemeManager.Instance.CurrentTheme == ThemeMode.Dark;
+            ThemeManager.Instance.ThemeChanged += (s, mode) =>
+            {
+                IsDarkMode = mode == ThemeMode.Dark;
+            };
             
             if (CurrentView is LoginViewModel loginVm)
             {
@@ -152,6 +163,12 @@ namespace AvaloniaApplication1.ViewModels
             loginVm.LoginCompleted += OnLoginCompleted;
             CurrentView = loginVm;
             CurrentViewTitle = "Вход";
+        }
+
+        [RelayCommand]
+        private void ToggleTheme()
+        {
+            ThemeManager.Instance.ToggleTheme();
         }
     }
 }

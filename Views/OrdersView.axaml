@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
              x:Class="AvaloniaApplication1.Views.OrdersView">
 
     <Grid RowDefinitions="Auto,*" Margin="20">
@@ -11,7 +11,7 @@
             <TextBlock Text="🛒 Управление заказами" 
                       FontSize="24" 
                       FontWeight="Bold"
-                      Foreground="#1F2937"/>
+                      Foreground="{DynamicResource SystemBaseHighColor}"/>
             
             <Button Grid.Column="1" 
                    Content="Обновить" 
@@ -25,11 +25,11 @@
         <Grid Grid.Row="1" ColumnDefinitions="*,400">
             <!-- Orders List -->
             <Border Grid.Column="0" 
-                   BorderBrush="#E5E7EB" 
+                   BorderBrush="{DynamicResource SystemBaseMediumLowColor}" 
                    BorderThickness="1" 
                    CornerRadius="5"
                    Margin="0,0,10,0"
-                   Background="White"
+                   Background="{DynamicResource SystemAltHighColor}"
                    IsVisible="{Binding !SelectedOrder}">
                 <DataGrid ItemsSource="{Binding Orders}"
                          SelectedItem="{Binding SelectedOrder}"
@@ -40,20 +40,20 @@
                          GridLinesVisibility="Horizontal"
                          HeadersVisibility="All">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="№" Binding="{Binding Id, StringFormat={}{0:0000}}" Width="60"/>
-                        <DataGridTextColumn Header="Дата" Binding="{Binding OrderDate, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="130"/>
-                        <DataGridTextColumn Header="Клиент" Binding="{Binding Customer.FullName}" Width="180"/>
-                        <DataGridTextColumn Header="Телефон" Binding="{Binding Customer.Phone}" Width="120"/>
-                        <DataGridTextColumn Header="Сумма" Binding="{Binding TotalAmount, StringFormat={}{0:F2} ₽}" Width="100"/>
+                        <DataGridTextColumn Header="№" Binding="{Binding Id, StringFormat={}{0:0000}}" Width="120"/>
+                        <DataGridTextColumn Header="Дата" Binding="{Binding OrderDate, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="150"/>
+                        <DataGridTextColumn Header="Клиент" Binding="{Binding Customer.FullName}" Width="220"/>
+                        <DataGridTextColumn Header="Телефон" Binding="{Binding Customer.Phone}" Width="135"/>
+                        <DataGridTextColumn Header="Сумма" Binding="{Binding TotalAmount, StringFormat={}{0:F2} ₽}" Width="120"/>
                         <DataGridTextColumn Header="Статус" Binding="{Binding StatusDisplay}" Width="150"/>
-                        <DataGridTextColumn Header="Тип" Binding="{Binding DeliveryTypeDisplay}" Width="100"/>
+                        <DataGridTextColumn Header="Тип" Binding="{Binding DeliveryTypeDisplay}" Width="150"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>
 
-            <!-- Order Details Panel - Light blue accent like mobile -->
+            <!-- Order Details Panel - Theme aware -->
             <Border Grid.Column="1" 
-                   Background="#EFF6FF" 
+                   Background="{DynamicResource SystemAltMediumColor}" 
                    CornerRadius="5" 
                    Padding="15"
                    Margin="10,0,0,0"
@@ -64,10 +64,10 @@
                                   FontSize="18" 
                                   FontWeight="Bold"
                                   HorizontalAlignment="Center"
-                                  Foreground="#1F2937"/>
+                                  Foreground="{DynamicResource SystemBaseHighColor}"/>
 
                         <!-- Order Info -->
-                        <Border Background="White" CornerRadius="5" Padding="10" BorderThickness="1" BorderBrush="#DDD">
+                        <Border Background="{DynamicResource SystemAltHighColor}" CornerRadius="5" Padding="10" BorderThickness="1" BorderBrush="{DynamicResource SystemBaseMediumLowColor}">
                             <StackPanel Spacing="8">
                                 <TextBlock FontSize="14">
                                     <Run FontWeight="Bold">Заказ №</Run>
@@ -93,7 +93,7 @@
                         </Border>
 
                         <!-- Customer Info -->
-                        <Border Background="White" CornerRadius="5" Padding="10" BorderThickness="1" BorderBrush="#DDD">
+                        <Border Background="{DynamicResource SystemAltHighColor}" CornerRadius="5" Padding="10" BorderThickness="1" BorderBrush="{DynamicResource SystemBaseMediumLowColor}">
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Клиент" FontWeight="Bold" FontSize="14"/>
                                 <TextBlock FontSize="14" Text="{Binding SelectedOrder.Customer.FullName}"/>
@@ -109,20 +109,20 @@
                         </Border>
 
                         <!-- Order Items -->
-                        <Border Background="White" CornerRadius="5" Padding="10" BorderThickness="1" BorderBrush="#DDD">
+                        <Border Background="{DynamicResource SystemAltHighColor}" CornerRadius="5" Padding="10" BorderThickness="1" BorderBrush="{DynamicResource SystemBaseMediumLowColor}">
                             <StackPanel Spacing="10">
                                 <TextBlock Text="Товары" FontWeight="Bold" FontSize="14"/>
                                 <ItemsControl ItemsSource="{Binding SelectedOrder.Items}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Background="#F5F5F5" 
+                                            <Border Background="{DynamicResource SystemAltLowColor}" 
                                                    CornerRadius="5" 
                                                    Padding="8"
                                                    Margin="0,0,0,5">
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <StackPanel Grid.Column="0" Spacing="3">
-                                                        <TextBlock Text="{Binding ProductName}" FontWeight="Bold" Foreground="#1F2937"/>
-                                                        <TextBlock Foreground="#6B7280">
+                                                        <TextBlock Text="{Binding ProductName}" FontWeight="Bold" Foreground="{DynamicResource SystemBaseHighColor}"/>
+                                                        <TextBlock Foreground="{DynamicResource SystemBaseMediumColor}">
                                                             <Run Text="{Binding Quantity}"/>
                                                             <Run> × </Run>
                                                             <Run Text="{Binding PricePerKg, StringFormat={}{0:F2} ₽}"/>
@@ -214,16 +214,16 @@
 
             <!-- Empty State -->
             <Border Grid.Column="0" 
-                   Background="#F9FAFB" 
+                   Background="{DynamicResource SystemAltLowColor}" 
                    CornerRadius="5"
                    IsVisible="{Binding !HasOrders}">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
                     <TextBlock Text="🛒" FontSize="48" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Нет заказов" FontSize="18" HorizontalAlignment="Center" Foreground="#1F2937"/>
+                    <TextBlock Text="Нет заказов" FontSize="18" HorizontalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}"/>
                     <TextBlock Text="Заказы появятся здесь" 
                               TextWrapping="Wrap"
                               TextAlignment="Center"
-                              Foreground="#6B7280"/>
+                              Foreground="{DynamicResource SystemBaseMediumColor}"/>
                 </StackPanel>
             </Border>
         </Grid>

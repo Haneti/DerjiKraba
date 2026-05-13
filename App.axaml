@@ -2,28 +2,110 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="AvaloniaApplication1.App"
              xmlns:local="using:AvaloniaApplication1"
+             xmlns:conv="using:AvaloniaApplication1.Converters"
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
+
+    <Application.Resources>
+        <!-- Theme-aware accent brushes -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#007AFF"/>
+        <SolidColorBrush x:Key="SuccessBrush" Color="#16A34A"/>
+        <SolidColorBrush x:Key="WarningBrush" Color="#F59E0B"/>
+        <SolidColorBrush x:Key="DangerBrush" Color="#DC2626"/>
+        <SolidColorBrush x:Key="StaffMessageBrush" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="ClientMessageBrush" Color="#E5E7EB"/>
+        
+        <!-- Converters -->
+        <conv:StringNotEmptyConverter x:Key="StringNotEmptyConverter"/>
+        <conv:HorizontalAlignmentConverter x:Key="HorizontalAlignmentConverter"/>
+        <conv:MessageForegroundConverter x:Key="MessageForegroundConverter"/>
+        <conv:MessageTimeForegroundConverter x:Key="MessageTimeForegroundConverter"/>
+        <conv:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
+        <conv:BoolToBrushConverter x:Key="BoolToBrushConverter"/>
+        <conv:DateTimeToDateTimeOffsetConverter x:Key="DateTimeToDateTimeOffsetConverter"/>
+        <conv:DateTimeDisplayConverter x:Key="DateTimeDisplayConverter"/>
+        <conv:UnitDisplayConverter x:Key="UnitDisplayConverter"/>
+        <conv:ImageUrlConverter x:Key="ImageUrlConverter"/>
+        <conv:RemoveImageMarkdownConverter x:Key="RemoveImageMarkdownConverter"/>
+        <conv:RoleDisplayConverter x:Key="RoleDisplayConverter"/>
+        <conv:IntToBoolConverter x:Key="IntToBoolConverter"/>
+        <conv:ValueColorConverter x:Key="ValueColorConverter"/>
+        <conv:StringToBrushConverter x:Key="StringToBrushConverter"/>
+        <conv:ThemeIconConverter x:Key="ThemeIconConverter"/>
+    </Application.Resources>
   
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
         
-        <!-- Global text readability improvements -->
+        <!-- Global text readability improvements - Theme aware -->
         <Style Selector="TextBlock">
-            <Setter Property="Foreground" Value="#1F2937"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
         </Style>
         <Style Selector="Button TextBlock">
             <Setter Property="Foreground" Value="White"/>
         </Style>
         
-        <!-- Primary button style for login forms -->
+        <!-- DataGrid Theme Support -->
+        <Style Selector="DataGrid">
+            <Setter Property="Background" Value="{DynamicResource SystemAltHighColor}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemBaseMediumLowColor}"/>
+        </Style>
+        <Style Selector="DataGridColumnHeader">
+            <Setter Property="Background" Value="{DynamicResource SystemAltMediumColor}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemBaseMediumLowColor}"/>
+        </Style>
+        <Style Selector="DataGridCell">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
+        </Style>
+        
+        <!-- ListBox styling - Theme aware -->
+        <Style Selector="ListBox">
+            <Setter Property="Background" Value="{DynamicResource SystemAltHighColor}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemBaseMediumLowColor}"/>
+        </Style>
+        
+        <!-- ScrollViewer - Theme aware -->
+        <Style Selector="ScrollViewer">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        
+        <!-- DatePicker - Theme aware -->
+        <Style Selector="DatePicker">
+            <Setter Property="Background" Value="{DynamicResource SystemAltMediumColor}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemBaseMediumLowColor}"/>
+        </Style>
+        <Style Selector="DatePicker TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
+        </Style>
+        <Style Selector="DatePicker :is(Button)">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
+        </Style>
+        <Style Selector="CalendarDayButton">
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="CalendarButton">
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        
+        <!-- Primary button style -->
         <Style Selector="Button.Primary">
-            <Setter Property="Background" Value="#3B82F6"/>
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColor}"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Padding" Value="15,8"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -33,13 +115,19 @@
         </Style>
         
         <!-- Secondary button style -->
-        <Style Selector="Button:not(.Primary)">
-            <Setter Property="Background" Value="#E5E7EB"/>
-            <Setter Property="Foreground" Value="#1F2937"/>
+        <Style Selector="Button.Secondary">
+            <Setter Property="Background" Value="{DynamicResource SystemAltMediumColor}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
             <Setter Property="Padding" Value="15,8"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemBaseMediumLowColor}"/>
             <Setter Property="CornerRadius" Value="5"/>
             <Setter Property="MinWidth" Value="150"/>
+        </Style>
+        
+        <!-- Selectable text style for copying -->
+        <Style Selector="SelectableTextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
         </Style>
     </Application.Styles>
 </Application>
