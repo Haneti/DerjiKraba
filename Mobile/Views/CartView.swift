@@ -124,7 +124,7 @@ struct CartView: View {
                     notes: notes.isEmpty ? nil : notes,
                     items: items
                 )
-                let api = APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+                let api = APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
                 try await api.createOrder(payload)
                 // Очищаем корзину локально
                 appState.clearCart()

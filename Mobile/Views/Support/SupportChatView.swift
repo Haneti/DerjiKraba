@@ -204,7 +204,7 @@ struct SupportChatView: View {
         defer { isLoading = false }
         
         do {
-            let api = APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+            let api = APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
             messages = try await api.fetchSupportMessages(phone: clientPhone)
         } catch {
             guard !silent else { return }
@@ -225,7 +225,7 @@ struct SupportChatView: View {
         
         Task {
             do {
-                let api = APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+                let api = APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
                 try await api.sendSupportMessage(phone: clientPhone, senderPhone: user.phone, text: text)
                 await loadMessages(silent: true)
             } catch {
@@ -239,7 +239,7 @@ struct SupportChatView: View {
     private func markRead() {
         Task {
             do {
-                try await APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+                try await APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
                     .markSupportConversationRead(phone: clientPhone)
             } catch {
                 await MainActor.run {
@@ -264,7 +264,7 @@ struct SupportChatView: View {
                     throw NSError(domain: "SupportImage", code: 1, userInfo: [NSLocalizedDescriptionKey: "Не удалось подготовить фото"])
                 }
 
-                try await APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+                try await APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
                     .sendSupportImage(phone: clientPhone, senderPhone: user.phone, imageData: compressed)
                 await loadMessages(silent: true)
                 await MainActor.run {

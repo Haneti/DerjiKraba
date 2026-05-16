@@ -97,7 +97,7 @@ struct OrderHistoryView: View {
         isLoading = true
         defer { isLoading = false }
         do {
-            let api = APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+            let api = APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
             orders = try await api.fetchOrders(forUser: user.id.uuidString)
         } catch {
             print("❌ Ошибка загрузки истории: \(error)")

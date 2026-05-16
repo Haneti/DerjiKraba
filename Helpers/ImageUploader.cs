@@ -15,7 +15,7 @@ namespace AvaloniaApplication1.Helpers
         private static ImageUploader? _instance;
         public static ImageUploader Instance => _instance ??= new ImageUploader();
 
-        private readonly string _baseURL = "http://87.225.104.51:3000";
+        private readonly string _baseURL = "https://derji-kraba.ru/api";
         private readonly HttpClient _httpClient;
 
         private ImageUploader()

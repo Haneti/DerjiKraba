@@ -167,7 +167,7 @@ struct MainTabView: View {
         }
 
         do {
-            let api = APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+            let api = APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
 
             if user.isEmployee {
                 let convs = try await api.fetchSupportConversations()

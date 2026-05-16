@@ -141,7 +141,7 @@ final class APIClient {
         return f
     }()
 
-    init(baseURL: URL = URL(string: "http://87.225.104.51:3000")!) {
+    init(baseURL: URL = URL(string: "https://derji-kraba.ru/api")!) {
         self.baseURL = baseURL
         let d = JSONDecoder()
         d.keyDecodingStrategy = .convertFromSnakeCase

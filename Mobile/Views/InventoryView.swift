@@ -331,7 +331,7 @@ struct InventoryView: View {
         for item in inventoryItems where abs(item.difference) > 0.01 {
             do {
                 // 1. Обновляем ТОЛЬКО количество товара на сервере
-                let api = APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+                let api = APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
                 
                 // Отправляем только quantity_in_stock
                 var updateBody: [String: Any] = [:]

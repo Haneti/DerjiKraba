@@ -97,7 +97,7 @@ struct AdminOrdersView: View {
         isLoading = true
         defer { isLoading = false }
         do {
-            let api = APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+            let api = APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
             let newOrders = try await api.fetchOrders()
             
             // Проверяем появилисьсь ли новые заказы
@@ -334,7 +334,7 @@ struct RemoteOrderDetailView: View {
                     .background(Color.gray.opacity(0.1))
                     .cornerRadius(12)
                     .onChange(of: status) { _, newValue in
-                        Task { try? await APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!).updateOrderStatus(orderId: order.id, status: newValue) }
+                        Task { try? await APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!).updateOrderStatus(orderId: order.id, status: newValue) }
                     }
                 }
                 

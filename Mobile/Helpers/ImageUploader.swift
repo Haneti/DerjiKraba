@@ -27,7 +27,7 @@ enum ImageUploadError: LocalizedError {
 final class ImageUploader {
     static let shared = ImageUploader()
     
-    private let baseURL = "http://87.225.104.51:3000"
+    private let baseURL = "https://derji-kraba.ru/api"
     
     private init() {}
     

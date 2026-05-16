@@ -397,7 +397,7 @@ struct ProductDetailView: View {
         // Отправляем на сервер (не блокируем UI)
         Task {
             do {
-                let api = APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+                let api = APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
                 let _ = try await api.updateProduct(
                     id: product.id.uuidString,
                     name: product.name,

@@ -90,7 +90,7 @@ struct SupportConversationsView: View {
         defer { isLoading = false }
 
         do {
-            let api = APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+            let api = APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
             let convs = try await api.fetchSupportConversations()
 
             // Сначала те, где нужен ответ, затем остальные. Внутри — по времени.
@@ -110,7 +110,7 @@ struct SupportConversationsView: View {
     private func markRead(_ conversation: SupportConversationDTO) {
         Task {
             do {
-                try await APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+                try await APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
                     .markSupportConversationRead(phone: conversation.clientPhone)
                 await load()
             } catch {

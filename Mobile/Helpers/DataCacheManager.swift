@@ -45,7 +45,7 @@ class DataCacheManager {
         
         // Загружаем с сервера
         let api = await MainActor.run {
-            APIClient(baseURL: URL(string: "http://87.225.104.51:3000")!)
+            APIClient(baseURL: URL(string: "https://derji-kraba.ru/api")!)
         }
         let products = try await api.fetchProducts()
         
