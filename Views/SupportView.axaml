@@ -143,9 +143,9 @@
                 <!-- Messages - Messenger style: reversed order (newest at bottom), auto-scroll -->
                 <ScrollViewer Grid.Row="1" 
                              x:Name="MessagesScrollViewer"
-                             Padding="15,15,15,80"
+                             Padding="15,15,15,15"
                              HorizontalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding Messages}" x:Name="MessagesItemsControl">
+                    <ItemsControl ItemsSource="{Binding Messages}" x:Name="MessagesItemsControl" Margin="0,0,0,8">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Vertical" Spacing="8" VerticalAlignment="Bottom"/>

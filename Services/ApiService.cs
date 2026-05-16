@@ -19,7 +19,7 @@ namespace AvaloniaApplication1.Services
         {
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri("https://derji-kraba.ru/api")
+                BaseAddress = new Uri("https://derji-kraba.ru/api/")
             };
             
             _jsonOptions = new JsonSerializerOptions
@@ -34,7 +34,7 @@ namespace AvaloniaApplication1.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync("/health");
+                var response = await _httpClient.GetAsync("health");
                 return response.IsSuccessStatusCode;
             }
             catch
@@ -55,7 +55,7 @@ namespace AvaloniaApplication1.Services
                     "application/json"
                 );
 
-                var response = await _httpClient.PostAsync("/auth/login", content);
+                var response = await _httpClient.PostAsync("auth/login", content);
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<User>(_jsonOptions);
@@ -79,7 +79,7 @@ namespace AvaloniaApplication1.Services
                     "application/json"
                 );
 
-                var response = await _httpClient.PostAsync("/auth/register", content);
+                var response = await _httpClient.PostAsync("auth/register", content);
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<User>(_jsonOptions);
@@ -103,7 +103,7 @@ namespace AvaloniaApplication1.Services
                     "application/json"
                 );
 
-                var response = await _httpClient.PostAsync("/auth/request-code", content);
+                var response = await _httpClient.PostAsync("auth/request-code", content);
                 return response.IsSuccessStatusCode;
             }
             catch
@@ -122,7 +122,7 @@ namespace AvaloniaApplication1.Services
                     "application/json"
                 );
 
-                var response = await _httpClient.PostAsync("/auth/verify-code", content);
+                var response = await _httpClient.PostAsync("auth/verify-code", content);
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<User>(_jsonOptions);
@@ -143,7 +143,7 @@ namespace AvaloniaApplication1.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync("/products");
+                var response = await _httpClient.GetAsync("products");
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<List<Product>>(_jsonOptions) ?? new List<Product>();
@@ -178,7 +178,7 @@ namespace AvaloniaApplication1.Services
                     "application/json"
                 );
 
-                var response = await _httpClient.PostAsync("/products", content);
+                var response = await _httpClient.PostAsync("products", content);
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<Product>(_jsonOptions);
@@ -213,7 +213,7 @@ namespace AvaloniaApplication1.Services
                     "application/json"
                 );
 
-                var response = await _httpClient.PatchAsync($"/products/{id}", content);
+                var response = await _httpClient.PatchAsync($"products/{id}", content);
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<Product>(_jsonOptions);
@@ -231,7 +231,7 @@ namespace AvaloniaApplication1.Services
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"/products/{id}");
+                var response = await _httpClient.DeleteAsync($"products/{id}");
                 return response.IsSuccessStatusCode;
             }
             catch
@@ -259,7 +259,7 @@ namespace AvaloniaApplication1.Services
                 fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
                 content.Add(fileContent, "image", fileName);
 
-                var response = await _httpClient.PostAsync($"/products/{productId}/image", content);
+                var response = await _httpClient.PostAsync($"products/{productId}/image", content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -288,7 +288,7 @@ namespace AvaloniaApplication1.Services
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"/products/{productId}/image");
+                var response = await _httpClient.DeleteAsync($"products/{productId}/image");
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
@@ -315,7 +315,7 @@ namespace AvaloniaApplication1.Services
             {
                 Console.WriteLine($"📦 Applying inventory adjustment for {request.Items.Count} items");
                 
-                var response = await _httpClient.PostAsJsonAsync("/inventory/adjustments", request, _jsonOptions);
+                var response = await _httpClient.PostAsJsonAsync("inventory/adjustments", request, _jsonOptions);
                 
                 if (response.IsSuccessStatusCode)
                 {
@@ -343,7 +343,7 @@ namespace AvaloniaApplication1.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync("/orders");
+                var response = await _httpClient.GetAsync("orders");
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<List<Order>>(_jsonOptions) ?? new List<Order>();
@@ -361,7 +361,7 @@ namespace AvaloniaApplication1.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"/orders/user/{userId}");
+                var response = await _httpClient.GetAsync($"orders/user/{userId}");
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<List<Order>>(_jsonOptions) ?? new List<Order>();
@@ -385,7 +385,7 @@ namespace AvaloniaApplication1.Services
                     "application/json"
                 );
 
-                var response = await _httpClient.PostAsync("/orders", content);
+                var response = await _httpClient.PostAsync("orders", content);
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<Order>(_jsonOptions);
@@ -409,7 +409,7 @@ namespace AvaloniaApplication1.Services
                     "application/json"
                 );
 
-                var response = await _httpClient.PatchAsync($"/orders/{orderId}", content);
+                var response = await _httpClient.PatchAsync($"orders/{orderId}", content);
                 return response.IsSuccessStatusCode;
             }
             catch
@@ -426,7 +426,7 @@ namespace AvaloniaApplication1.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync("/support/conversations");
+                var response = await _httpClient.GetAsync("support/conversations");
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<List<SupportConversation>>(_jsonOptions) ?? new List<SupportConversation>();
@@ -444,7 +444,7 @@ namespace AvaloniaApplication1.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"/support/conversations/{phone}");
+                var response = await _httpClient.GetAsync($"support/conversations/{phone}");
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<SupportConversation>(_jsonOptions);
@@ -463,7 +463,7 @@ namespace AvaloniaApplication1.Services
             
             try
             {
-                var response = await _httpClient.GetAsync($"/support/conversations/{phone}/messages");
+                var response = await _httpClient.GetAsync($"support/conversations/{phone}/messages");
                 if (response.IsSuccessStatusCode)
                 {
                     var messages = await response.Content.ReadFromJsonAsync<List<SupportMessage>>(_jsonOptions) ?? new List<SupportMessage>();
@@ -495,7 +495,7 @@ namespace AvaloniaApplication1.Services
                     "application/json"
                 );
 
-                var response = await _httpClient.PostAsync($"/support/conversations/{clientPhone}/messages", content);
+                var response = await _httpClient.PostAsync($"support/conversations/{clientPhone}/messages", content);
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
@@ -523,7 +523,7 @@ namespace AvaloniaApplication1.Services
                 fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
                 content.Add(fileContent, "image", fileName);
 
-                var response = await _httpClient.PostAsync("/upload", content);
+                var response = await _httpClient.PostAsync("upload", content);
                 
                 if (response.IsSuccessStatusCode)
                 {
@@ -565,7 +565,7 @@ namespace AvaloniaApplication1.Services
                     "application/json"
                 );
 
-                var response = await _httpClient.PostAsync("/staff/create", content);
+                var response = await _httpClient.PostAsync("staff/create", content);
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<User>(_jsonOptions);
@@ -583,7 +583,7 @@ namespace AvaloniaApplication1.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync("/users");
+                var response = await _httpClient.GetAsync("users");
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<List<User>>(_jsonOptions) ?? new List<User>();
@@ -610,13 +610,13 @@ namespace AvaloniaApplication1.Services
                 );
 
                 // Try different possible endpoints
-                var response = await _httpClient.PatchAsync($"/staff/update-role/{userId}", content);
+                var response = await _httpClient.PatchAsync($"staff/update-role/{userId}", content);
                 
                 if (!response.IsSuccessStatusCode)
                 {
                     // Fallback to users endpoint if staff endpoint doesn't work
                     Console.WriteLine($"⚠️ First attempt failed, trying fallback endpoint...");
-                    response = await _httpClient.PatchAsync($"/users/{userId}/role", content);
+                    response = await _httpClient.PatchAsync($"users/{userId}/role", content);
                 }
                 
                 if (response.IsSuccessStatusCode)
@@ -646,7 +646,7 @@ namespace AvaloniaApplication1.Services
             {
                 Console.WriteLine($"🗑️ Deleting user {userId}");
                 
-                var response = await _httpClient.DeleteAsync($"/users/{userId}");
+                var response = await _httpClient.DeleteAsync($"users/{userId}");
                 
                 if (response.IsSuccessStatusCode)
                 {
