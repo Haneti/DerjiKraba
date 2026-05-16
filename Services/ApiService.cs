@@ -240,6 +240,71 @@ namespace AvaloniaApplication1.Services
             }
         }
 
+        public async Task<(string Url, string Hash)?> UploadProductImageAsync(string productId, string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath))
+                {
+                    Console.WriteLine($"❌ File not found: {filePath}");
+                    return null;
+                }
+
+                var fileName = $"product_{productId}.jpg";
+                var fileBytes = await File.ReadAllBytesAsync(filePath);
+                var boundary = Guid.NewGuid().ToString();
+
+                using var content = new MultipartFormDataContent($"--{boundary}");
+                using var fileContent = new ByteArrayContent(fileBytes);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+                content.Add(fileContent, "image", fileName);
+
+                var response = await _httpClient.PostAsync($"/products/{productId}/image", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadFromJsonAsync<ProductImageUploadResponse>(_jsonOptions);
+                    if (json?.Ok == true && json.ImageUrl != null && json.ImageHash != null)
+                    {
+                        Console.WriteLine($"✅ Image uploaded: {json.ImageUrl}");
+                        return (json.ImageUrl, json.ImageHash);
+                    }
+                    Console.WriteLine($"❌ Image upload: unexpected response");
+                    return null;
+                }
+
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Image upload failed: {response.StatusCode} — {error}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ UploadProductImage error: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<bool> DeleteProductImageAsync(string productId)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"/products/{productId}/image");
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ DeleteProductImage error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private class ProductImageUploadResponse
+        {
+            public bool Ok { get; set; }
+            public string? ImageUrl { get; set; }
+            public string? ImageHash { get; set; }
+        }
+
         #endregion
 
         #region Inventory

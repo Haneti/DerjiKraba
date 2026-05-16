@@ -60,6 +60,15 @@ namespace AvaloniaApplication1.ViewModels
         [ObservableProperty]
         private string _unitType = "kg";
 
+        [ObservableProperty]
+        private string? _pendingImagePath;
+
+        [ObservableProperty]
+        private string? _currentImageUrl;
+
+        [ObservableProperty]
+        private bool _isUploadingImage = false;
+
         partial void OnSelectedProductChanged(Product? value)
         {
             if (value != null)
@@ -140,6 +149,14 @@ namespace AvaloniaApplication1.ViewModels
             Description = product.Description ?? string.Empty;
             IsAvailable = product.IsAvailable;
             UnitType = product.UnitType;
+            PendingImagePath = null;
+            CurrentImageUrl = product.ImageURL;
+        }
+
+        [RelayCommand]
+        public void SetImagePath(string? path)
+        {
+            PendingImagePath = path;
         }
 
         [RelayCommand]
@@ -177,6 +194,22 @@ namespace AvaloniaApplication1.ViewModels
                 else
                 {
                     result = await _apiService.CreateProductAsync(productData);
+                }
+
+                if (result != null && !string.IsNullOrEmpty(PendingImagePath))
+                {
+                    IsUploadingImage = true;
+                    var uploaded = await _apiService.UploadProductImageAsync(result.Id, PendingImagePath);
+                    IsUploadingImage = false;
+                    if (uploaded.HasValue)
+                    {
+                        result.ImageURL = uploaded.Value.Url;
+                        result.ImageHash = uploaded.Value.Hash;
+                    }
+                    else
+                    {
+                        ErrorMessage = "Товар сохранён, но изображение не удалось загрузить";
+                    }
                 }
 
                 if (result != null)
@@ -262,6 +295,8 @@ namespace AvaloniaApplication1.ViewModels
             Description = string.Empty;
             IsAvailable = true;
             UnitType = "kg";
+            PendingImagePath = null;
+            CurrentImageUrl = null;
         }
     }
 }

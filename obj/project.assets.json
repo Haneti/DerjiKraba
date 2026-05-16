@@ -1501,31 +1501,24 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\pizdec\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "/Users/haneti/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1.csproj",
+      "projectUniqueName": "/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/AvaloniaApplication1.csproj",
       "projectName": "AvaloniaApplication1",
-      "projectPath": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\AvaloniaApplication1.csproj",
-      "packagesPath": "C:\\Users\\pizdec\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\pizdec\\Desktop\\DerjiKrabaApps\\DerjiKrabaDesktop\\obj\\",
+      "projectPath": "/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/AvaloniaApplication1.csproj",
+      "packagesPath": "/Users/haneti/.nuget/packages/",
+      "outputPath": "/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/obj/",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\pizdec\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "/Users/haneti/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -1544,7 +1537,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.300"
+      "SdkAnalysisLevel": "9.0.100"
     },
     "frameworks": {
       "net8.0": {
@@ -1590,12 +1583,22 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[8.0.12, 8.0.12]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Ref",
+            "version": "[8.0.12, 8.0.12]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.311/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.102/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

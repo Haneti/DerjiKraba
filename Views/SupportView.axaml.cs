@@ -12,6 +12,7 @@ namespace AvaloniaApplication1.Views
 {
     public partial class SupportView : UserControl
     {
+        private static ImageViewerWindow? _imageViewerInstance;
         public SupportView()
         {
             InitializeComponent();
@@ -75,13 +76,22 @@ namespace AvaloniaApplication1.Views
             {
                 using var httpClient = new HttpClient();
                 var bytes = await httpClient.GetByteArrayAsync(imageUrl);
-                
+
                 using var stream = new MemoryStream(bytes);
                 var bitmap = new Bitmap(stream);
-                
-                var viewer = new ImageViewerWindow();
-                viewer.SetImage(bitmap);
-                viewer.Show();
+
+                if (_imageViewerInstance == null || !_imageViewerInstance.IsVisible)
+                {
+                    _imageViewerInstance = new ImageViewerWindow();
+                    _imageViewerInstance.Closed += (_, _) => _imageViewerInstance = null;
+                    _imageViewerInstance.SetImage(bitmap);
+                    _imageViewerInstance.Show();
+                }
+                else
+                {
+                    _imageViewerInstance.SetImage(bitmap);
+                    _imageViewerInstance.Activate();
+                }
             }
             catch (Exception ex)
             {

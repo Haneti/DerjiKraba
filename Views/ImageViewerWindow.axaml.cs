@@ -134,13 +134,12 @@ namespace AvaloniaApplication1.Views
                 var viewportWidth = ImageScrollViewer.Viewport.Width;
                 var viewportHeight = ImageScrollViewer.Viewport.Height;
 
-                // Clamp offsets to prevent dragging outside the window
-                // Allow some padding but don't let image go completely out of view
-                var minOffsetX = Math.Min(0, imageWidth - viewportWidth);
-                var minOffsetY = Math.Min(0, imageHeight - viewportHeight);
+                // Clamp offsets so the image cannot be dragged outside the viewport
+                var maxOffsetX = Math.Max(0, imageWidth - viewportWidth);
+                var maxOffsetY = Math.Max(0, imageHeight - viewportHeight);
 
-                newOffsetX = Math.Clamp(newOffsetX, minOffsetX, Math.Max(0, imageWidth - viewportWidth));
-                newOffsetY = Math.Clamp(newOffsetY, minOffsetY, Math.Max(0, imageHeight - viewportHeight));
+                newOffsetX = Math.Clamp(newOffsetX, 0, maxOffsetX);
+                newOffsetY = Math.Clamp(newOffsetY, 0, maxOffsetY);
 
                 ImageScrollViewer.Offset = new Vector(newOffsetX, newOffsetY);
                 _lastMousePosition = currentPosition;
