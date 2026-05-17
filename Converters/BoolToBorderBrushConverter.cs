@@ -6,18 +6,24 @@ using Avalonia.Media;
 namespace AvaloniaApplication1.Converters
 {
     /// <summary>
-    /// Converts boolean to border brush for selection highlighting
+    /// Converts boolean to border brush for selection highlighting or error states
     /// </summary>
     public class BoolToBorderBrushConverter : IValueConverter
     {
-        public Brush FalseBrush { get; set; } = new SolidColorBrush(Color.FromRgb(229, 231, 235)); // #E5E7EB
-        public Brush TrueBrush { get; set; } = new SolidColorBrush(Color.FromRgb(37, 99, 235)); // #2563EB
+        public Brush FalseBrush { get; set; } = new SolidColorBrush(Color.FromRgb(229, 231, 235)); // #E5E7EB - gray
+        public Brush TrueBrush { get; set; } = new SolidColorBrush(Color.FromRgb(37, 99, 235)); // #2563EB - blue
+        public Brush ErrorBrush { get; set; } = new SolidColorBrush(Color.FromRgb(220, 38, 38)); // #DC2626 - red
         
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (value is bool isSelected)
+            // Parameter can specify which mode to use: "error" for error highlighting
+            var mode = parameter?.ToString();
+            
+            if (value is bool boolValue)
             {
-                return isSelected ? TrueBrush : FalseBrush;
+                if (mode == "error" && boolValue)
+                    return ErrorBrush;
+                return boolValue ? TrueBrush : FalseBrush;
             }
             return FalseBrush;
         }

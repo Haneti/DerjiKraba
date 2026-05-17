@@ -4,6 +4,66 @@ using System.Text.Json.Serialization;
 
 namespace AvaloniaApplication1.Models
 {
+    /// <summary>
+    /// Детали адреса доставки из JSON delivery_details
+    /// </summary>
+    public class DeliveryAddressDetails
+    {
+        [JsonPropertyName("address")]
+        public string Address { get; set; } = "";
+
+        [JsonPropertyName("house_type")]
+        public string HouseType { get; set; } = "apartment";
+
+        [JsonPropertyName("entrance")]
+        public string? Entrance { get; set; }
+
+        [JsonPropertyName("floor")]
+        public string? Floor { get; set; }
+
+        [JsonPropertyName("apartment")]
+        public string? Apartment { get; set; }
+
+        [JsonPropertyName("intercom")]
+        public string? Intercom { get; set; }
+
+        [JsonPropertyName("intercom_broken")]
+        public bool IntercomBroken { get; set; }
+
+        [JsonPropertyName("latitude")]
+        public double? Latitude { get; set; }
+
+        [JsonPropertyName("longitude")]
+        public double? Longitude { get; set; }
+
+        public bool IsApartment => HouseType == "apartment";
+        public bool IsHouse => HouseType == "house";
+
+        public string FormattedDetails
+        {
+            get
+            {
+                var parts = new List<string>();
+                
+                if (IsApartment)
+                {
+                    if (!string.IsNullOrEmpty(Entrance))
+                        parts.Add($"подъезд {Entrance}");
+                    if (!string.IsNullOrEmpty(Floor))
+                        parts.Add($"этаж {Floor}");
+                    if (!string.IsNullOrEmpty(Apartment))
+                        parts.Add($"кв. {Apartment}");
+                    if (IntercomBroken)
+                        parts.Add("домофон не работает");
+                    else if (!string.IsNullOrEmpty(Intercom))
+                        parts.Add($"домофон {Intercom}");
+                }
+                
+                return string.Join(", ", parts);
+            }
+        }
+    }
+
     public class OrderItem
     {
         [JsonPropertyName("id")]
@@ -56,6 +116,15 @@ namespace AvaloniaApplication1.Models
         [JsonPropertyName("deliveryAddress")]
         public string? DeliveryAddress { get; set; }
 
+        [JsonPropertyName("deliveryDetails")]
+        public string? DeliveryDetails { get; set; } // JSON с расширенной информацией
+
+        [JsonPropertyName("latitude")]
+        public double? Latitude { get; set; }
+
+        [JsonPropertyName("longitude")]
+        public double? Longitude { get; set; }
+
         [JsonPropertyName("totalAmount")]
         public decimal TotalAmount { get; set; }
 
@@ -64,6 +133,31 @@ namespace AvaloniaApplication1.Models
 
         [JsonPropertyName("items")]
         public List<OrderItem> Items { get; set; } = new();
+
+        /// <summary>
+        /// Парсит delivery_details JSON и возвращает структурированные данные
+        /// </summary>
+        public DeliveryAddressDetails? ParsedDeliveryDetails
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(DeliveryDetails))
+                    return null;
+                try
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<DeliveryAddressDetails>(DeliveryDetails);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Есть ли координаты для отображения на карте
+        /// </summary>
+        public bool HasCoordinates => Latitude.HasValue && Longitude.HasValue;
 
         [JsonPropertyName("customer")]
         public Customer? Customer { get; set; }

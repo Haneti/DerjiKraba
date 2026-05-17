@@ -15,13 +15,27 @@
 
     <Grid RowDefinitions="Auto,*" Margin="20">
         <!-- Header - Matching mobile app style -->
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,20">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,0,20">
             <TextBlock Text="📦 Управление товарами" 
                       FontSize="24" 
                       FontWeight="Bold"
                       Foreground="{DynamicResource SystemBaseHighColor}"/>
             
-            <Button Grid.Column="1" 
+            <!-- Search Box -->
+            <TextBox Grid.Column="1" 
+                     Margin="20,0"
+                     Watermark="🔍 Поиск по названию или категории..."
+                     Text="{Binding SearchText}"
+                     VerticalContentAlignment="Center"/>
+            
+            <Button Grid.Column="2" 
+                   Content="📦 Масс. ред." 
+                   Command="{Binding StartBulkEditCommand}"
+                   Margin="0,0,10,0"
+                   Background="#F59E0B"
+                   Foreground="White"/>
+            
+            <Button Grid.Column="3" 
                    Content="+ Добавить товар" 
                    Command="{Binding StartCreateCommand}"
                    Classes="Primary"
@@ -39,7 +53,7 @@
                    Margin="0,0,10,0"
                    Background="{DynamicResource SystemAltHighColor}">
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Products}">
+                    <ItemsControl ItemsSource="{Binding FilteredProducts}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <WrapPanel Orientation="Horizontal"/>
@@ -49,7 +63,7 @@
                             <DataTemplate>
                                 <Border Width="220" Height="360" Margin="8" 
                                         CornerRadius="8" BorderThickness="2"
-                                        BorderBrush="Transparent"
+                                        BorderBrush="{Binding IsExpired, Converter={StaticResource BorderBrushConverter}, ConverterParameter=error}"
                                         Background="{DynamicResource SystemAltHighColor}" BoxShadow="0 2 4 #20000000"
                                         Cursor="Hand">
                                     <Border.Styles>
@@ -92,11 +106,15 @@
                                         <StackPanel Grid.Row="2" Spacing="2" Margin="0,4,0,4">
                                             <TextBlock Text="{Binding StockStatus}" FontSize="11" 
                                                        Foreground="{DynamicResource SystemBaseMediumColor}"/>
-                                            <TextBlock Text="{Binding ExpiryText}" 
-                                                       FontSize="11"
-                                                       FontWeight="Bold"
-                                                       Foreground="{Binding ExpiryColor}"
-                                                       IsVisible="{Binding IsExpiringSoon}"/>
+                                            <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsExpiringSoon}">
+                                                <TextBlock Text="{Binding ExpiryIcon}" 
+                                                           FontSize="11"
+                                                           IsVisible="{Binding IsExpiringSoon}"/>
+                                                <TextBlock Text="{Binding ExpiryText}" 
+                                                           FontSize="11"
+                                                           FontWeight="Bold"
+                                                           Foreground="{Binding ExpiryColor}"/>
+                                            </StackPanel>
                                         </StackPanel>
                                         
                                         <!-- Edit Button - FIXED at bottom of card -->
@@ -269,6 +287,120 @@
                                Background="#DC2626"
                                Foreground="White"
                                Margin="0,10,0,0"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Bulk Edit Panel -->
+            <Border Grid.Column="1" 
+                   Background="{DynamicResource SystemControlBackgroundAltHighBrush}" 
+                   CornerRadius="5" 
+                   Padding="15"
+                   BorderBrush="{DynamicResource SystemControlBackgroundListMediumBrush}"
+                   BorderThickness="1"
+                   IsVisible="{Binding IsBulkEditing}">
+                <ScrollViewer>
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="📦 Массовое редактирование" 
+                                  FontSize="18" 
+                                  FontWeight="Bold"
+                                  HorizontalAlignment="Center"
+                                  Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+
+                        <TextBlock Text="Найдите товары и выберите нужные для редактирования. Установите новый срок годности и примените ко всем выбранным." 
+                                  TextWrapping="Wrap"
+                                  Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                        
+                        <!-- Search Section -->
+                        <Border Background="{DynamicResource SystemControlBackgroundListMediumBrush}" CornerRadius="4" Padding="8">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Поиск товаров:" FontWeight="Bold" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                                <TextBlock Text="{Binding SearchText, StringFormat='Поиск: {0}'}" 
+                                          IsVisible="{Binding SearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                          Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                <TextBox Watermark="Название или категория..." 
+                                        Text="{Binding BulkCategory}"/>
+                                <Button Content="🔍 Найти товары" 
+                                       Command="{Binding SearchBulkEditCandidatesCommand}"
+                                       Background="#3B82F6"
+                                       Foreground="White"
+                                       HorizontalAlignment="Stretch"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Product Selection List -->
+                        <Border Background="{DynamicResource SystemControlBackgroundAltMediumBrush}" CornerRadius="4" Padding="8" 
+                                IsVisible="{Binding BulkEditCandidates.Count, Converter={StaticResource IntToBoolConverter}}">
+                            <StackPanel Spacing="6">
+                                <Grid ColumnDefinitions="*,Auto,Auto">
+                                    <TextBlock Text="Найденные товары:" FontWeight="Bold" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                                    <Button Grid.Column="1" Content="Все" 
+                                           Command="{Binding SelectAllBulkCandidatesCommand}"
+                                           Margin="0,0,5,0" Padding="8,2"/>
+                                    <Button Grid.Column="2" Content="Снять" 
+                                           Command="{Binding DeselectAllBulkCandidatesCommand}"
+                                           Padding="8,2"/>
+                                </Grid>
+                                <TextBlock Text="{Binding BulkEditCandidates.Count, StringFormat='Найдено: {0}'}" 
+                                          Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" FontSize="11"/>
+                                
+                                <!-- Product List with CheckBoxes -->
+                                <ScrollViewer MaxHeight="200">
+                                    <StackPanel>
+                                        <ItemsControl ItemsSource="{Binding BulkEditCandidates}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox Command="{Binding $parent[StackPanel].DataContext.ToggleProductSelectionCommand}"
+                                                             CommandParameter="{Binding}"
+                                                             Content="{Binding Name}"
+                                                             ToolTip.Tip="{Binding Category}"
+                                                             Margin="0,2"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
+                        
+                        <Border Background="{DynamicResource SystemControlBackgroundAccentBrush}" CornerRadius="4" Padding="10" Opacity="0.2">
+                            <StackPanel>
+                                <TextBlock Text="Выбрано товаров:" 
+                                          HorizontalAlignment="Center"
+                                          Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                                <TextBlock Text="{Binding BulkEditCount}" 
+                                          FontSize="32" 
+                                          FontWeight="Bold"
+                                          HorizontalAlignment="Center"
+                                          Foreground="#DC2626"/>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel>
+                            <TextBlock Text="Новый срок годности:*" FontWeight="Bold" Foreground="#1E293B"/>
+                            <DatePicker SelectedDate="{Binding BulkExpiryDate, Converter={StaticResource DateTimeToDateTimeOffsetConverter}}"/>
+                        </StackPanel>
+                        
+                        <!-- Error/Success Message -->
+                        <TextBlock Text="{Binding ErrorMessage}" 
+                                  Foreground="#DC2626"
+                                  TextWrapping="Wrap"/>
+
+                        <!-- Buttons -->
+                        <Grid ColumnDefinitions="*,*" Margin="0,10,0,0">
+                            <Button Content="Применить" 
+                                   Command="{Binding ApplyBulkEditCommand}"
+                                   Classes="Primary"
+                                   Background="#3B82F6"
+                                   Foreground="White"
+                                   Margin="0,0,5,0"/>
+                            <Button Grid.Column="1" 
+                                   Content="❌ Отмена" 
+                                   Command="{Binding CancelBulkEditCommand}"
+                                   Background="#DC2626"
+                                   Foreground="White"
+                                   Margin="5,0,0,0"/>
+                        </Grid>
                     </StackPanel>
                 </ScrollViewer>
             </Border>

@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -14,6 +15,8 @@ namespace AvaloniaApplication1.Controls
     /// </summary>
     public class CachedImage : Image
     {
+        private CancellationTokenSource? _loadingCts;
+
         public static readonly StyledProperty<string?> SourceUrlProperty =
             AvaloniaProperty.Register<CachedImage, string?>(
                 nameof(SourceUrl));
@@ -53,6 +56,11 @@ namespace AvaloniaApplication1.Controls
 
         private async Task LoadImageAsync()
         {
+            // Cancel any previous loading operation
+            _loadingCts?.Cancel();
+            _loadingCts = new CancellationTokenSource();
+            var token = _loadingCts.Token;
+            
             try
             {
                 if (string.IsNullOrEmpty(SourceUrl))
@@ -64,56 +72,95 @@ namespace AvaloniaApplication1.Controls
 
                 // First show placeholder
                 Source = GeneratePlaceholderForProduct(ProductName);
+                
+                // Check if cancelled
+                token.ThrowIfCancellationRequested();
 
                 // Then load from cache asynchronously
                 var bitmap = await ImageCacheManager.Instance.GetImageAsync(SourceUrl, ImageHash);
                 
-                if (bitmap != null)
+                // Check if this is still the current request and not cancelled
+                if (!token.IsCancellationRequested && bitmap != null)
                 {
                     Source = bitmap;
                 }
             }
+            catch (OperationCanceledException)
+            {
+                // Loading was cancelled, ignore
+            }
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Failed to load image: {ex.Message}");
-                Source = GeneratePlaceholderForProduct(ProductName);
+                if (!token.IsCancellationRequested)
+                {
+                    Source = GeneratePlaceholderForProduct(ProductName);
+                }
+            }
+        }
+        
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            // Protect against null Source
+            if (Source == null)
+            {
+                // Return default size if no source
+                return new Size(200, 160);
+            }
+            
+            try
+            {
+                return base.MeasureOverride(availableSize);
+            }
+            catch
+            {
+                // If measurement fails (e.g., bitmap issue), return fallback size
+                return new Size(200, 160);
             }
         }
 
-        private static RenderTargetBitmap GeneratePlaceholderForProduct(string? productName)
+        private static IImage? GeneratePlaceholderForProduct(string? productName)
         {
-            const int width = 200;
-            const int height = 160;
-            
-            var bitmap = new RenderTargetBitmap(new PixelSize(width, height), new Vector(96, 96));
-            
-            using (var context = bitmap.CreateDrawingContext())
+            try
             {
-                // Light blue background
-                var lightBlueBrush = new SolidColorBrush(Color.FromRgb(219, 234, 254));
-                context.FillRectangle(lightBlueBrush, new Rect(0, 0, width, height));
+                const int width = 200;
+                const int height = 160;
                 
-                // Get emoji based on product name or use default crab
-                var emoji = !string.IsNullOrEmpty(productName) 
-                    ? GetEmojiForProduct(productName) 
-                    : "🦀";
+                var bitmap = new RenderTargetBitmap(new PixelSize(width, height), new Vector(96, 96));
                 
-                // Draw emoji centered
-                var formattedText = new FormattedText(
-                    emoji,
-                    System.Globalization.CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight,
-                    new Typeface("Segoe UI Emoji"),
-                    80,
-                    Brushes.Black);
+                using (var context = bitmap.CreateDrawingContext())
+                {
+                    // Light blue background
+                    var lightBlueBrush = new SolidColorBrush(Color.FromRgb(219, 234, 254));
+                    context.FillRectangle(lightBlueBrush, new Rect(0, 0, width, height));
+                    
+                    // Get emoji based on product name or use default crab
+                    var emoji = !string.IsNullOrEmpty(productName) 
+                        ? GetEmojiForProduct(productName) 
+                        : "🦀";
+                    
+                    // Draw emoji centered - use system default font that supports emoji
+                    var formattedText = new FormattedText(
+                        emoji,
+                        System.Globalization.CultureInfo.CurrentCulture,
+                        FlowDirection.LeftToRight,
+                        Typeface.Default,
+                        80,
+                        Brushes.Black);
+                    
+                    var textX = (width - formattedText.Width) / 2;
+                    var textY = (height - formattedText.Height) / 2;
+                    
+                    context.DrawText(formattedText, new Point(textX, textY));
+                }
                 
-                var textX = (width - formattedText.Width) / 2;
-                var textY = (height - formattedText.Height) / 2;
-                
-                context.DrawText(formattedText, new Point(textX, textY));
+                return bitmap;
             }
-            
-            return bitmap;
+            catch
+            {
+                // Fallback: return null, control will use default behavior
+                return null;
+            }
         }
 
         private static string GetEmojiForProduct(string productName)

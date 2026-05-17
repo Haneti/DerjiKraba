@@ -1,0 +1,148 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AvaloniaApplication1.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+             x:Class="AvaloniaApplication1.Views.OrderMapView"
+             x:DataType="vm:OrderMapViewModel">
+    
+    <Design.DataContext>
+        <vm:OrderMapViewModel />
+    </Design.DataContext>
+
+    <Border CornerRadius="8" 
+            BorderBrush="{DynamicResource SystemControlBackgroundListMediumBrush}"
+            BorderThickness="1"
+            ClipToBounds="True">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <!-- Header -->
+            <Border Grid.Row="0" 
+                   Background="{DynamicResource SystemControlBackgroundListMediumBrush}"
+                   Padding="12,8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="M12,2C8.13,2 5,5.13 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9C19,5.13 15.87,2 12,2M12,11.5C10.62,11.5 9.5,10.38 9.5,9C9.5,7.62 10.62,6.5 12,6.5C13.38,6.5 14.5,7.62 14.5,9C14.5,10.38 13.38,11.5 12,11.5Z"
+                             Width="16" 
+                             Height="16"
+                             Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                        <TextBlock Text="{Binding Title}" 
+                                  FontWeight="SemiBold"
+                                  Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" 
+                           Command="{Binding OpenInBrowserCommand}"
+                           Theme="{StaticResource {x:Type Button}}"
+                           Padding="8,4"
+                           FontSize="12">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <PathIcon Data="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z"
+                                     Width="12" Height="12"/>
+                            <TextBlock Text="Открыть карту"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Map Image -->
+            <Grid Grid.Row="1" 
+                 Background="{DynamicResource SystemControlBackgroundAltMediumBrush}"
+                 Height="250">
+                <Image Source="{Binding MapImage}" 
+                      Stretch="UniformToFill"
+                      IsVisible="{Binding HasMapImage}"/>
+                
+                <!-- Coordinates Overlay -->
+                <Border VerticalAlignment="Bottom" 
+                       HorizontalAlignment="Left"
+                       Background="#80000000"
+                       CornerRadius="4"
+                       Padding="8,4"
+                       Margin="8">
+                    <TextBlock Text="{Binding CoordinatesText}" 
+                              Foreground="White"
+                              FontSize="11"/>
+                </Border>
+
+                <!-- Loading -->
+                <StackPanel IsVisible="{Binding IsLoading}"
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" Width="60"/>
+                    <TextBlock Text="Загрузка карты..." 
+                              Margin="0,8,0,0"
+                              FontSize="12"/>
+                </StackPanel>
+
+                <!-- Error -->
+                <StackPanel IsVisible="{Binding HasError}"
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center"
+                           Spacing="8">
+                    <PathIcon Data="M13,13H11V7H13M13,17H11V15H13M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2Z"
+                             Width="40" Height="40"
+                             Foreground="Orange"/>
+                    <TextBlock Text="{Binding ErrorMessage}"
+                              TextWrapping="Wrap"
+                              TextAlignment="Center"
+                              MaxWidth="200"/>
+                </StackPanel>
+
+                <!-- No Coordinates -->
+                <StackPanel IsVisible="{Binding !HasCoordinates}"
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center"
+                           Spacing="8">
+                    <PathIcon Data="M12,2C8.13,2 5,5.13 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9C19,5.13 15.87,2 12,2M12,11.5C10.62,11.5 9.5,10.38 9.5,9C9.5,7.62 10.62,6.5 12,6.5C13.38,6.5 14.5,7.62 14.5,9C14.5,10.38 13.38,11.5 12,11.5Z"
+                             Width="40" Height="40"
+                             Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBlock Text="Нет координат для отображения"
+                              Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Address Details -->
+            <StackPanel Grid.Row="2" 
+                       Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                       IsVisible="{Binding HasAddressDetails}"
+                       Margin="0">
+                <Grid ColumnDefinitions="Auto,*" 
+                     RowDefinitions="Auto,Auto,Auto"
+                     Margin="12">
+                    <TextBlock Grid.Column="0" 
+                              Grid.Row="0"
+                              Text="Адрес:"
+                              FontWeight="Medium"
+                              Margin="0,0,8,4"/>
+                    <TextBlock Grid.Column="1" 
+                              Grid.Row="0"
+                              Text="{Binding Address}"
+                              TextWrapping="Wrap"/>
+
+                    <TextBlock Grid.Column="0" 
+                              Grid.Row="1"
+                              Text="Детали:"
+                              FontWeight="Medium"
+                              Margin="0,0,8,4"
+                              IsVisible="{Binding HasDetails}"/>
+                    <TextBlock Grid.Column="1" 
+                              Grid.Row="1"
+                              Text="{Binding Details}"
+                              TextWrapping="Wrap"
+                              IsVisible="{Binding HasDetails}"/>
+
+                    <TextBlock Grid.Column="0" 
+                              Grid.Row="2"
+                              Text="Тип:"
+                              FontWeight="Medium"
+                              Margin="0,0,8,0"
+                              IsVisible="{Binding HouseTypeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    <TextBlock Grid.Column="1" 
+                              Grid.Row="2"
+                              Text="{Binding HouseTypeText}"
+                              IsVisible="{Binding HouseTypeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                </Grid>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

@@ -242,6 +242,102 @@ namespace AvaloniaApplication1.Helpers
             return $"Memory Cache: {_memoryCache.Count}/{MaxMemoryCacheItems} items";
         }
 
+        /// <summary>
+        /// Get all cached files with their metadata
+        /// </summary>
+        public List<CachedFileInfo> GetAllCachedFiles()
+        {
+            try
+            {
+                var files = Directory.GetFiles(_cacheDirectory, "*");
+                var result = new List<CachedFileInfo>();
+
+                foreach (var file in files)
+                {
+                    var fileName = Path.GetFileName(file);
+                    // Skip metadata files (.hash, .url)
+                    if (fileName.EndsWith(".hash") || fileName.EndsWith(".url"))
+                        continue;
+
+                    var hashFilePath = file + ".hash";
+                    var urlFilePath = file + ".url";
+                    
+                    string? hash = File.Exists(hashFilePath) ? File.ReadAllText(hashFilePath) : null;
+                    string? originalUrl = File.Exists(urlFilePath) ? File.ReadAllText(urlFilePath) : null;
+                    
+                    var fileInfo = new FileInfo(file);
+                    
+                    result.Add(new CachedFileInfo
+                    {
+                        FileName = fileName,
+                        FilePath = file,
+                        Hash = hash,
+                        OriginalUrl = originalUrl,
+                        Size = fileInfo.Length,
+                        LastModified = fileInfo.LastWriteTime
+                    });
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Failed to get cached files: {ex.Message}");
+                return new List<CachedFileInfo>();
+            }
+        }
+
+        /// <summary>
+        /// Find unused cached images by comparing with product image hashes
+        /// </summary>
+        public List<CachedFileInfo> FindUnusedCachedImages(List<string> productHashes)
+        {
+            var allFiles = GetAllCachedFiles();
+            var productHashSet = new HashSet<string>(productHashes);
+            
+            return allFiles.Where(file =>
+            {
+                // If file has no hash or hash is not in products list, it's unused
+                if (string.IsNullOrEmpty(file.Hash)) return true;
+                return !productHashSet.Contains(file.Hash);
+            }).ToList();
+        }
+
+        /// <summary>
+        /// Delete specific cached files and their metadata
+        /// </summary>
+        public int DeleteCachedFiles(List<string> filePaths)
+        {
+            int deletedCount = 0;
+            foreach (var path in filePaths)
+            {
+                TryDeleteFile(path);
+                TryDeleteFile(path + ".hash");
+                TryDeleteFile(path + ".url");
+                deletedCount++;
+            }
+            return deletedCount;
+        }
+
+        /// <summary>
+        /// Get display name for cached file (original filename from server if available)
+        /// </summary>
+        public string GetDisplayName(CachedFileInfo file)
+        {
+            if (string.IsNullOrEmpty(file.OriginalUrl))
+                return file.FileName;
+            
+            try
+            {
+                var uri = new Uri(file.OriginalUrl);
+                return Path.GetFileName(uri.LocalPath);
+            }
+            catch
+            {
+                return file.FileName;
+            }
+        }
+
         private async Task<Bitmap?> DownloadAndSaveImageAsync(string url, string? serverHash, string cacheFilePath, string hashFilePath)
         {
             try
@@ -261,6 +357,10 @@ namespace AvaloniaApplication1.Helpers
                     await File.WriteAllTextAsync(hashFilePath, serverHash);
                     Console.WriteLine($"💾 Hash saved: {serverHash}");
                 }
+                
+                // Save original URL for display
+                var urlFilePath = cacheFilePath + ".url";
+                await File.WriteAllTextAsync(urlFilePath, url);
 
                 Console.WriteLine($"💾 Image saved to cache: {url}");
                 return bitmap;
@@ -328,6 +428,30 @@ namespace AvaloniaApplication1.Helpers
                 sb.Append(b.ToString("x2"));
             }
             return sb.ToString();
+        }
+    }
+
+    /// <summary>
+    /// Information about a cached file
+    /// </summary>
+    public class CachedFileInfo
+    {
+        public string FileName { get; set; } = "";
+        public string FilePath { get; set; } = "";
+        public string? Hash { get; set; }
+        public string? OriginalUrl { get; set; }
+        public long Size { get; set; }
+        public DateTime LastModified { get; set; }
+        
+        public string SizeFormatted => FormatBytes(Size);
+        
+        private static string FormatBytes(long bytes)
+        {
+            if (bytes == 0) return "0 B";
+            string[] sizes = { "B", "KB", "MB", "GB" };
+            int i = (int)Math.Floor(Math.Log(bytes, 1024));
+            i = Math.Min(i, sizes.Length - 1);
+            return $"{bytes / Math.Pow(1024, i):F2} {sizes[i]}";
         }
     }
 }

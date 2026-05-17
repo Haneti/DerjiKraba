@@ -71,13 +71,14 @@ namespace AvaloniaApplication1.Converters
             var clientBrushKey = parts.Length > 1 ? parts[1].Trim() : "ClientMessageBrush";
 
             if (App.Current?.Resources.TryGetResource(staffBrushKey, null, out var staffBrush) == true &&
-                App.Current?.Resources.TryGetResource(clientBrushKey, null, out var clientBrush) == true)
+                App.Current?.Resources.TryGetResource(clientBrushKey, null, out var clientBrush) == true &&
+                staffBrush is IBrush staff && clientBrush is IBrush client)
             {
                 if (value is bool isFromStaff && isFromStaff)
                 {
-                    return staffBrush;
+                    return staff;
                 }
-                return clientBrush;
+                return client;
             }
 
             // Fallback

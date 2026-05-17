@@ -24,6 +24,9 @@ build_property.EnableCodeStyleSeverity =
 [/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/App.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
+[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/ImageCacheCleanupView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
 [/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/ImageViewerWindow.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
@@ -34,6 +37,9 @@ build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
 [/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/MainWindow.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/OrderMapView.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
 [/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/OrdersView.axaml]

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using AvaloniaApplication1.Models;
 using AvaloniaApplication1.Services;
@@ -18,7 +20,32 @@ namespace AvaloniaApplication1.ViewModels
         private ObservableCollection<Product> _products = new();
 
         [ObservableProperty]
+        private ObservableCollection<Product> _filteredProducts = new();
+
+        [ObservableProperty]
+        private string _searchText = string.Empty;
+
+        [ObservableProperty]
         private Product? _selectedProduct;
+
+        // Bulk editing properties
+        [ObservableProperty]
+        private bool _isBulkEditing = false;
+
+        [ObservableProperty]
+        private string _bulkCategory = string.Empty;
+
+        [ObservableProperty]
+        private DateTime? _bulkExpiryDate;
+
+        [ObservableProperty]
+        private ObservableCollection<Product> _bulkEditCandidates = new();
+
+        [ObservableProperty]
+        private ObservableCollection<Product> _selectedProducts = new();
+
+        [ObservableProperty]
+        private int _bulkEditCount = 0;
 
         [ObservableProperty]
         private bool _isLoading = false;
@@ -73,9 +100,34 @@ namespace AvaloniaApplication1.ViewModels
         {
             if (value != null)
             {
-                // Pre-load image when product is selected
                 LoadProductImageAsync(value);
             }
+        }
+
+        partial void OnSearchTextChanged(string value)
+        {
+            FilterProducts();
+        }
+
+        partial void OnSelectedProductsChanged(ObservableCollection<Product> value)
+        {
+            BulkEditCount = value?.Count ?? 0;
+        }
+
+        private void FilterProducts()
+        {
+            if (string.IsNullOrWhiteSpace(SearchText))
+            {
+                FilteredProducts = new ObservableCollection<Product>(Products);
+            }
+            else
+            {
+                var filtered = Products.Where(p => 
+                    p.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    p.Category.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+                FilteredProducts = new ObservableCollection<Product>(filtered);
+            }
+            HasProducts = FilteredProducts.Count > 0;
         }
 
         private async void LoadProductImageAsync(Product product)
@@ -110,7 +162,7 @@ namespace AvaloniaApplication1.ViewModels
                 {
                     Products.Add(product);
                 }
-                HasProducts = Products.Count > 0;
+                FilterProducts();
                 Console.WriteLine($"✅ Loaded {Products.Count} products");
                 Console.WriteLine($"📊 {ImageCacheManager.Instance.GetMemoryCacheStats()}");
             }
@@ -282,6 +334,152 @@ namespace AvaloniaApplication1.ViewModels
             
             Console.WriteLine($"👆 Opening product: {product.Name}");
             StartEdit(product);
+        }
+
+        [RelayCommand]
+        private void StartBulkEdit()
+        {
+            IsBulkEditing = true;
+            BulkCategory = string.Empty;
+            BulkExpiryDate = null;
+            BulkEditCandidates.Clear();
+            SelectedProducts.Clear();
+            ErrorMessage = string.Empty;
+        }
+
+        [RelayCommand]
+        private void CancelBulkEdit()
+        {
+            IsBulkEditing = false;
+            BulkCategory = string.Empty;
+            BulkExpiryDate = null;
+            BulkEditCandidates.Clear();
+            SelectedProducts.Clear();
+        }
+
+        [RelayCommand]
+        private void SearchBulkEditCandidates()
+        {
+            // Search products by name/category (only filter, no date filter)
+            var query = Products.AsEnumerable();
+            
+            // Filter by category/name if specified
+            if (!string.IsNullOrWhiteSpace(BulkCategory))
+            {
+                query = query.Where(p => 
+                    p.Name.Contains(BulkCategory, StringComparison.OrdinalIgnoreCase) ||
+                    p.Category.Contains(BulkCategory, StringComparison.OrdinalIgnoreCase));
+            }
+            
+            BulkEditCandidates = new ObservableCollection<Product>(query);
+            // Don't auto-select - let user choose
+            SelectedProducts.Clear();
+        }
+
+        [RelayCommand]
+        private void ToggleProductSelection(Product product)
+        {
+            if (SelectedProducts.Contains(product))
+            {
+                SelectedProducts.Remove(product);
+            }
+            else
+            {
+                SelectedProducts.Add(product);
+            }
+            BulkEditCount = SelectedProducts.Count;
+        }
+
+        [RelayCommand]
+        private void SelectAllBulkCandidates()
+        {
+            SelectedProducts = new ObservableCollection<Product>(BulkEditCandidates);
+            BulkEditCount = SelectedProducts.Count;
+        }
+
+        [RelayCommand]
+        private void DeselectAllBulkCandidates()
+        {
+            SelectedProducts.Clear();
+            BulkEditCount = 0;
+        }
+
+        [RelayCommand]
+        private async Task ApplyBulkEditAsync()
+        {
+            if (!BulkExpiryDate.HasValue)
+            {
+                ErrorMessage = "Укажите новый срок годности";
+                return;
+            }
+
+            var productsToEdit = SelectedProducts.ToList();
+                
+            if (productsToEdit.Count == 0)
+            {
+                ErrorMessage = "Выберите хотя бы один товар для редактирования";
+                return;
+            }
+
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+            int successCount = 0;
+            int failCount = 0;
+
+            try
+            {
+                foreach (var product in productsToEdit)
+                {
+                    var updatedProduct = new Product
+                    {
+                        Name = product.Name,
+                        Category = product.Category,
+                        PricePerKg = product.PricePerKg,
+                        QuantityInStock = product.QuantityInStock,
+                        DeliveryDate = product.DeliveryDate,
+                        ExpiryDate = BulkExpiryDate,
+                        Description = product.Description,
+                        IsAvailable = product.IsAvailable,
+                        UnitType = product.UnitType
+                    };
+
+                    var result = await _apiService.UpdateProductAsync(product.Id, updatedProduct);
+                    if (result != null)
+                    {
+                        successCount++;
+                        // Update in memory
+                        var index = Products.IndexOf(product);
+                        if (index >= 0)
+                        {
+                            Products[index] = result;
+                        }
+                    }
+                    else
+                    {
+                        failCount++;
+                    }
+                }
+
+                FilterProducts();
+                
+                if (failCount == 0)
+                {
+                    ErrorMessage = $"✅ Успешно обновлено {successCount} товаров";
+                    CancelBulkEdit();
+                }
+                else
+                {
+                    ErrorMessage = $"✅ Обновлено: {successCount}, ❌ Ошибок: {failCount}";
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Ошибка массового редактирования: {ex.Message}";
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         private void ClearForm()

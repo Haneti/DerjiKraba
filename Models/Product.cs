@@ -45,7 +45,19 @@ namespace AvaloniaApplication1.Models
         public string StockStatus => QuantityInStock > 0 ? $"В наличии: {QuantityInStock:F0} {UnitType}" : "Нет в наличии";
         
         /// <summary>
-        /// True if expiry date is within 14 days from today
+        /// True if product is expired (expiry date passed)
+        /// </summary>
+        public bool IsExpired
+        {
+            get
+            {
+                if (!ExpiryDate.HasValue) return false;
+                return ExpiryDate.Value.Date < DateTime.Today;
+            }
+        }
+        
+        /// <summary>
+        /// True if expiry date is within 14 days from today or already expired
         /// </summary>
         public bool IsExpiringSoon
         {
@@ -53,20 +65,28 @@ namespace AvaloniaApplication1.Models
             {
                 if (!ExpiryDate.HasValue) return false;
                 var daysLeft = (ExpiryDate.Value.Date - DateTime.Today).TotalDays;
-                return daysLeft >= 0 && daysLeft < 14;
+                // Show warning if expired (daysLeft < 0) or expiring within 14 days
+                return daysLeft < 14;
             }
         }
 
         /// <summary>
-        /// Color for expiry warning: Green if hidden (already taken care of), Red if available
+        /// Color for expiry warning: Red for expired or urgent, Orange for warning, Green if hidden
         /// </summary>
         public string ExpiryColor
         {
             get
             {
                 if (!IsExpiringSoon) return "Transparent";
-                // If product is hidden, show green (it's already taken care of)
-                // If product is available, show red warning
+                // Expired - always red
+                if (IsExpired) return "#DC2626";
+                // Expiring soon (< 2 days) - red
+                if (!ExpiryDate.HasValue) return "#DC2626";
+                var daysLeft = (ExpiryDate.Value.Date - DateTime.Today).TotalDays;
+                if (daysLeft <= 2) return "#DC2626";
+                // Expiring within 14 days - orange
+                if (daysLeft < 14) return "#F97316";
+                // If product is hidden and not urgent, show green
                 return IsAvailable ? "#DC2626" : "#16A34A";
             }
         }
@@ -80,11 +100,22 @@ namespace AvaloniaApplication1.Models
             {
                 if (!IsExpiringSoon || !ExpiryDate.HasValue) return "";
                 var daysLeft = (ExpiryDate.Value.Date - DateTime.Today).TotalDays;
+                
+                // Expired
+                if (IsExpired)
+                    return $"⚠ ПРОСРОЧЕН: {Math.Abs(daysLeft):F0} дн.!";
+                
+                // Expiring soon
                 if (IsAvailable)
                     return $"⚠ Срок: {daysLeft:F0} дн.";
                 else
                     return $"✓ Скрыт: {daysLeft:F0} дн.";
             }
         }
+        
+        /// <summary>
+        /// Icon for expiry status
+        /// </summary>
+        public string ExpiryIcon => IsExpired ? "⚠️" : (IsExpiringSoon ? "⏰" : "");
     }
 }

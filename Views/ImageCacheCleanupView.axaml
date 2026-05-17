@@ -1,0 +1,177 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AvaloniaApplication1.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
+             x:Class="AvaloniaApplication1.Views.ImageCacheCleanupView"
+             x:DataType="vm:ImageCacheCleanupViewModel">
+    
+    <Design.DataContext>
+        <vm:ImageCacheCleanupViewModel />
+    </Design.DataContext>
+
+    <Border Padding="20" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+        <Grid RowDefinitions="Auto,*,Auto,Auto">
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Spacing="10" Margin="0,0,0,15">
+                <TextBlock Text="🧹 Очистка кэша изображений" 
+                          FontSize="20" FontWeight="Bold"
+                          Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                <TextBlock Text="Проверка и удаление неиспользуемых изображений из локального кэша"
+                          TextWrapping="Wrap"
+                          Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+            </StackPanel>
+
+            <!-- Loading/Error States -->
+            <StackPanel Grid.Row="1" IsVisible="{Binding IsLoading}" 
+                       HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="100" Margin="0,0,0,10"/>
+                <TextBlock Text="Загрузка..." HorizontalAlignment="Center"/>
+            </StackPanel>
+
+            <Border Grid.Row="1" 
+                   Background="#FEE2E2" 
+                   CornerRadius="8" 
+                   Padding="15"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                   Margin="0,0,0,10">
+                <TextBlock Text="{Binding ErrorMessage}" 
+                          Foreground="#DC2626" 
+                          TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- Empty State -->
+            <StackPanel Grid.Row="1" 
+                       IsVisible="{Binding ShowEmptyState}"
+                       HorizontalAlignment="Center" 
+                       VerticalAlignment="Center"
+                       Spacing="15">
+                <PathIcon Data="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2Z"
+                         Width="60" Height="60"
+                         Foreground="Green"/>
+                <TextBlock Text="Нет неиспользуемых изображений" 
+                          FontSize="16" 
+                          FontWeight="Medium"
+                          Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                <TextBlock Text="Все кэшированные изображения используются" 
+                          Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+            </StackPanel>
+
+            <!-- File List -->
+            <ScrollViewer Grid.Row="1" 
+                         IsVisible="{Binding HasUnusedFiles}"
+                         VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="10">
+                    <!-- Stats -->
+                    <Border Background="{DynamicResource SystemControlBackgroundListMediumBrush}" 
+                           CornerRadius="8" 
+                           Padding="15">
+                        <Grid ColumnDefinitions="*,*">
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Файлов найдено:" FontSize="12" Opacity="0.7"/>
+                                <TextBlock Text="{Binding UnusedFiles.Count}" 
+                                          FontSize="24" FontWeight="Bold"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                <TextBlock Text="Общий размер:" FontSize="12" Opacity="0.7"/>
+                                <TextBlock Text="{Binding TotalSizeFormatted}" 
+                                          FontSize="24" 
+                                          FontWeight="Bold"
+                                          Foreground="Orange"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- File Items -->
+                    <ItemsControl ItemsSource="{Binding UnusedFiles}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource SystemControlBackgroundAltMediumBrush}"
+                                       CornerRadius="6"
+                                       Padding="12"
+                                       Margin="0,4">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <!-- Preview Thumbnail -->
+                                        <Border Grid.Column="0" 
+                                               Width="50" 
+                                               Height="50" 
+                                               CornerRadius="4"
+                                               Background="{DynamicResource SystemControlBackgroundListMediumBrush}"
+                                               Margin="0,0,12,0">
+                                            <Grid>
+                                                <Image Source="{Binding Thumbnail}" 
+                                                       Stretch="UniformToFill"
+                                                       IsVisible="{Binding HasThumbnail}"/>
+                                                <PathIcon Data="M21,19V5C21,3.89 20.1,3 19,3H5C3.9,3 3,3.89 3,5V19C3,20.11 3.9,21 5,21H19C20.1,21 21,20.11 21,19M10,8C11.1,8 12,8.9 12,10C12,11.1 11.1,12 10,12C8.9,12 8,11.1 8,10C8,8.9 8.9,8 10,8M15,16H5V15C5,13.67 7.67,13 10,13C12.33,13 15,13.67 15,15V16M19,16H17V14H19V16M19,12H17V7H19V12Z"
+                                                         Width="24" 
+                                                         Height="24"
+                                                         IsVisible="{Binding !HasThumbnail}"
+                                                         HorizontalAlignment="Center"
+                                                         VerticalAlignment="Center"
+                                                         Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- File Info -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayName}" 
+                                                      FontWeight="Medium"
+                                                      FontSize="14"
+                                                      TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding OriginalFileName}" 
+                                                      FontSize="11"
+                                                      Opacity="0.6"
+                                                      TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding SizeFormatted}" 
+                                                      FontSize="11"
+                                                      Opacity="0.6"/>
+                                        </StackPanel>
+
+                                        <!-- View Button -->
+                                        <Button Grid.Column="2"
+                                               Command="{Binding $parent[UserControl].DataContext.ViewImageCommand}"
+                                               CommandParameter="{Binding}"
+                                               Content="Просмотр"
+                                               Margin="10,0,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Refresh Button -->
+            <Button Grid.Row="2"
+                   Command="{Binding RefreshCommand}"
+                   Content="🔄 Обновить список"
+                   HorizontalAlignment="Left"
+                   Margin="0,15,0,10"/>
+
+            <!-- Action Buttons -->
+            <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto" IsVisible="{Binding HasUnusedFiles}">
+                <TextBlock Grid.Column="0" 
+                          Text="{Binding SelectedCountText}"
+                          VerticalAlignment="Center"/>
+                
+                <Button Grid.Column="1" 
+                       Command="{Binding SelectAllCommand}"
+                       Content="Выбрать все"
+                       Margin="0,0,10,0"/>
+                
+                <Button Grid.Column="2"
+                       Command="{Binding DeleteSelectedCommand}"
+                       Background="#DC2626"
+                       Foreground="White"
+                       IsEnabled="{Binding HasSelectedFiles}">
+                    <StackPanel Orientation="Horizontal">
+                        <PathIcon Data="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"
+                                 Width="16" Height="16" Margin="0,0,5,0"/>
+                        <TextBlock Text="{Binding DeleteButtonText}"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>
