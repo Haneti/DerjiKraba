@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 const TelegramBot = require('node-telegram-bot-api');
+const jwt = require('jsonwebtoken');
 
 // Proxy configuration for Telegram Bot
 const BOT_PROXY = process.env.BOT_PROXY || null; // Format: http://username:password@host:port or http://host:port
@@ -43,9 +44,189 @@ const fs = require('fs');
 
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use('/images', express.static('C:/DerjiKraba-Api/public/images')); // Статика для изображений
+
+// ========== SECURITY CONFIGURATION ==========
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+const MOBILE_API_KEY = process.env.MOBILE_API_KEY || 'be5e23bdd69baeeb2e7c97948f35faa5fae7b924613e52ece589bc24821e1051'; // Change in production!
+const TRUSTED_ORIGINS = [
+  'https://derji-kraba.ru',
+  'https://www.derji-kraba.ru',
+  'http://localhost:3000',
+  'http://localhost:8080',
+  'capacitor://localhost', // iOS app
+  'ionic://localhost'    // iOS app alternative
+];
+
+// Rate limiting storage (in-memory, resets on restart)
+const requestCounts = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX = 100; // max 100 requests per minute per IP
+
+// Security middleware
+app.use((req, res, next) => {
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
+// CORS with origin validation
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc)
+    if (!origin) return callback(null, true);
+    if (TRUSTED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    // Log suspicious origins
+    console.warn(`🚫 Blocked CORS request from untrusted origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
+}));
+
+app.use(express.json({ limit: '10mb' }));
+app.use('/images', express.static('C:/DerjiKraba-Api/public/images'));
+
+// Rate limiting middleware
+function rateLimit(req, res, next) {
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  const now = Date.now();
+  
+  if (!requestCounts.has(ip)) {
+    requestCounts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+  } else {
+    const data = requestCounts.get(ip);
+    if (now > data.resetTime) {
+      data.count = 1;
+      data.resetTime = now + RATE_LIMIT_WINDOW;
+    } else {
+      data.count++;
+      if (data.count > RATE_LIMIT_MAX) {
+        console.warn(`🚫 Rate limit exceeded for IP: ${ip}`);
+        return res.status(429).json({ error: 'Too many requests, please try again later' });
+      }
+    }
+  }
+  next();
+}
+
+// Block scrapers/bots for public endpoints
+function antiScrape(req, res, next) {
+  // Only apply to public GET endpoints
+  if (req.method !== 'GET' || req.path !== '/products') {
+    return next();
+  }
+  
+  // Check if request has valid Mobile API Key (from iOS app)
+  const mobileKey = req.headers['x-mobile-key'];
+  if (mobileKey === MOBILE_API_KEY) {
+    // Valid mobile app request, allow
+    return next();
+  }
+  
+  const userAgent = req.headers['user-agent'] || '';
+  const blockedAgents = [
+    'curl', 'wget', 'python', 'scrapy', 'httpclient', 'axios', 
+    'postman', 'insomnia', 'bot', 'crawler', 'spider', 'headless',
+    'puppeteer', 'playwright', 'selenium'
+  ];
+  
+  // Check for suspicious User-Agents
+  const isBlocked = blockedAgents.some(agent => 
+    userAgent.toLowerCase().includes(agent)
+  );
+  
+  if (isBlocked || userAgent.length === 0) {
+    console.warn(`🚫 Blocked scraper: "${userAgent.substring(0, 50)}" from IP: ${req.ip}`);
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  
+  // Log suspicious direct API access (no mobile key)
+  console.log(`⚠️ API access without mobile key from: ${userAgent.substring(0, 50)} IP: ${req.ip}`);
+  
+  next();
+}
+
+// JWT + Session Key validation middleware
+function requireAuth(req, res, next) {
+  // Skip for GET requests to public endpoints
+  if (req.method === 'GET' && (
+    req.path === '/products' || 
+    req.path.startsWith('/images/') ||
+    req.path === '/'
+  )) {
+    return next();
+  }
+  
+  // Skip auth endpoints (they handle their own auth)
+  if (req.path.startsWith('/auth/')) {
+    return next();
+  }
+  
+  // Check JWT token
+  const authHeader = req.headers['authorization'];
+  const sessionKey = req.headers['x-session-key'];
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing or invalid authorization header' });
+  }
+  
+  if (!sessionKey) {
+    return res.status(401).json({ error: 'Missing session key' });
+  }
+  
+  const token = authHeader.substring(7);
+  
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    // Verify session key matches
+    if (decoded.sessionKey !== sessionKey) {
+      console.warn(`🚫 Session key mismatch for user: ${decoded.userId}`);
+      return res.status(401).json({ error: 'Invalid session' });
+    }
+    
+    // Attach user info to request
+    req.userId = decoded.userId;
+    req.userPhone = decoded.phone;
+    req.userRole = decoded.role;
+    
+    next();
+  } catch (err) {
+    console.warn(`🚫 JWT verification failed: ${err.message}`);
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+}
+
+// Generate JWT with session key
+function generateTokens(user) {
+  const sessionKey = crypto.randomBytes(16).toString('hex');
+  
+  const token = jwt.sign(
+    { 
+      userId: user.id,
+      phone: user.phone,
+      role: user.role,
+      sessionKey: sessionKey
+    },
+    JWT_SECRET,
+    { expiresIn: '7d' } // Token valid for 7 days
+  );
+  
+  return { token, sessionKey };
+}
+
+// Apply rate limiting to all requests
+app.use(rateLimit);
+// Apply anti-scrape protection
+app.use(antiScrape);
+// Apply auth middleware to protected endpoints
+app.use(requireAuth);
 
 // Настройка multer для загрузки файлов
 const storage = multer.diskStorage({
@@ -347,18 +528,23 @@ app.post('/api/orders', async (req, res) => {
       details.latitude || null,
       details.longitude || null,
       total,
-      notes ?? null
+      notes || null
     ]);
     
     for (const it of items) {
       const [[{ uuid: itemId }]] = await conn.query(`SELECT UUID() AS uuid`);
+      const productId = it.product_id || null;
+      const qty = it.quantity || 0;
+      const price = it.price_per_kg || 0;
+      console.log('Inserting order_item:', { itemId, orderId, productId, qty, price, it });
       await conn.query(`
         INSERT INTO order_items (id, order_id, product_id, quantity, price_per_kg)
         VALUES (?, ?, ?, ?, ?)
-      `, [itemId, orderId, it.product_id ?? null, it.quantity, it.price_per_kg]);
+      `, [itemId, orderId, productId, qty, price]);
     }
     
     await conn.commit();
+    console.log('Order created:', orderId);
     res.json({ ok: true, order_id: orderId });
   } catch (e) {
     await conn.rollback();
@@ -682,6 +868,9 @@ app.post('/orders', async (req, res) => {
   try {
     await conn.beginTransaction();
     const [[{ uuid: orderId }]] = await conn.query(`SELECT UUID() AS uuid`);
+    
+    console.log('Creating order:', { orderId, user_id, delivery_type, items: items.length });
+    
     await conn.query(`
       INSERT INTO orders (
         id, user_id, order_date, status, 
@@ -690,12 +879,13 @@ app.post('/orders', async (req, res) => {
         latitude, longitude,
         total_amount, notes
       )
-      VALUES (?, ?, NOW(), 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, NOW(), 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      orderId, user_id, 
-      delivery_type, 
-      delivery_address ?? null, 
-      delivery_details ?? null,
+      orderId,
+      user_id,
+      delivery_type || 'delivery',
+      delivery_address || null,
+      delivery_details || null,
       details.house_type || 'apartment',
       details.entrance || null,
       details.floor || null,
@@ -704,16 +894,20 @@ app.post('/orders', async (req, res) => {
       details.intercom_broken || false,
       details.latitude || null,
       details.longitude || null,
-      total, 
-      notes ?? null
+      total,
+      notes || null
     ]);
 
     for (const it of items) {
       const [[{ uuid: itemId }]] = await conn.query(`SELECT UUID() AS uuid`);
+      const productId = it.product_id || null;
+      const qty = it.quantity || 0;
+      const price = it.price_per_kg || 0;
+      console.log('Inserting item:', { itemId, orderId, productId, qty, price });
       await conn.query(`
         INSERT INTO order_items (id, order_id, product_id, quantity, price_per_kg)
         VALUES (?, ?, ?, ?, ?)
-      `, [itemId, orderId, it.product_id ?? null, it.quantity, it.price_per_kg]);
+      `, [itemId, orderId, productId, qty, price]);
     }
 
     await conn.commit();
@@ -1336,7 +1530,40 @@ app.post("/auth/verify-code", async (req, res) => {
     [user.id]
   );
 
-  res.json(user);
+  // Generate JWT token and session key
+  const { token, sessionKey } = generateTokens(user);
+  
+  // Return user data + tokens
+  res.json({
+    user: {
+      id: user.id,
+      phone: user.phone,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      middle_name: user.middle_name,
+      role: user.role,
+      is_verified: user.is_verified
+    },
+    token: token,
+    sessionKey: sessionKey
+  });
+});
+
+// Get current user info (for session validation)
+app.get("/auth/me", async (req, res) => {
+  // This endpoint is protected by requireAuth middleware
+  // If we get here, req.userId is set
+  
+  const [rows] = await pool.query(
+    "SELECT id, phone, first_name, last_name, middle_name, role, is_verified FROM users WHERE id = ?",
+    [req.userId]
+  );
+  
+  if (rows.length === 0) {
+    return res.status(404).json({ error: "User not found" });
+  }
+  
+  res.json(rows[0]);
 });
 
 
