@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using AvaloniaApplication1.Models;
 
@@ -14,19 +15,61 @@ namespace AvaloniaApplication1.Services
     {
         private readonly HttpClient _httpClient;
         private readonly JsonSerializerOptions _jsonOptions;
+        private string? _token;
+        private string? _sessionKey;
+        private const string MobileApiKey = "be5e23bdd69baeeb2e7c97948f35faa5fae7b924613e52ece589bc24821e1051";
 
-        public ApiService()
+        public ApiService(string? token = null, string? sessionKey = null)
         {
+            _token = token;
+            _sessionKey = sessionKey;
+
             _httpClient = new HttpClient
             {
                 BaseAddress = new Uri("https://derji-kraba.ru/api/")
             };
+
+            _httpClient.DefaultRequestHeaders.Add("X-Mobile-Key", MobileApiKey);
+            UpdateAuthHeaders();
             
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
+        }
+
+        private void UpdateAuthHeaders()
+        {
+            _httpClient.DefaultRequestHeaders.Authorization =
+                !string.IsNullOrEmpty(_token)
+                    ? new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _token)
+                    : null;
+
+            if (_httpClient.DefaultRequestHeaders.Contains("X-Session-Key"))
+                _httpClient.DefaultRequestHeaders.Remove("X-Session-Key");
+
+            if (!string.IsNullOrEmpty(_sessionKey))
+                _httpClient.DefaultRequestHeaders.Add("X-Session-Key", _sessionKey);
+        }
+
+        public void SetCredentials(string? token, string? sessionKey)
+        {
+            _token = token;
+            _sessionKey = sessionKey;
+            UpdateAuthHeaders();
+        }
+
+        private class AuthResponse
+        {
+            [JsonPropertyName("user")]
+            public User User { get; set; } = new User();
+
+            [JsonPropertyName("token")]
+            public string Token { get; set; } = string.Empty;
+
+            [JsonPropertyName("sessionKey")]
+            public string SessionKey { get; set; } = string.Empty;
         }
 
         // Health check
@@ -112,7 +155,7 @@ namespace AvaloniaApplication1.Services
             }
         }
 
-        public async Task<User?> VerifyCodeAsync(string phone, string code)
+        public async Task<(User? user, string? token, string? sessionKey)> VerifyCodeAsync(string phone, string code)
         {
             try
             {
@@ -125,13 +168,98 @@ namespace AvaloniaApplication1.Services
                 var response = await _httpClient.PostAsync("auth/verify-code", content);
                 if (response.IsSuccessStatusCode)
                 {
+                    var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>(_jsonOptions);
+                    if (authResponse?.User != null)
+                    {
+                        SetCredentials(authResponse.Token, authResponse.SessionKey);
+                        authResponse.User.Token = authResponse.Token;
+                        authResponse.User.SessionKey = authResponse.SessionKey;
+                        return (authResponse.User, authResponse.Token, authResponse.SessionKey);
+                    }
+                }
+                return (null, null, null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Verify code error: {ex.Message}");
+                return (null, null, null);
+            }
+        }
+
+        public async Task<User?> GetCurrentUserAsync()
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync("auth/me");
+                if (response.IsSuccessStatusCode)
+                {
                     return await response.Content.ReadFromJsonAsync<User>(_jsonOptions);
                 }
                 return null;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Get current user error: {ex.Message}");
                 return null;
+            }
+        }
+
+        private static readonly string SessionFilePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "DerjiKrabaDesktop",
+            "session.json"
+        );
+
+        public static async Task SaveSessionAsync(User user)
+        {
+            try
+            {
+                var directory = Path.GetDirectoryName(SessionFilePath);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
+
+                var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+                var json = JsonSerializer.Serialize(user, options);
+                await File.WriteAllTextAsync(SessionFilePath, json);
+                Console.WriteLine("✅ Session saved");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Save session error: {ex.Message}");
+            }
+        }
+
+        public static async Task<User?> LoadSessionAsync()
+        {
+            try
+            {
+                if (!File.Exists(SessionFilePath))
+                    return null;
+
+                var json = await File.ReadAllTextAsync(SessionFilePath);
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+                var user = JsonSerializer.Deserialize<User>(json, options);
+                Console.WriteLine($"✅ Session loaded for user: {user?.Phone}");
+                return user;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Load session error: {ex.Message}");
+                return null;
+            }
+        }
+
+        public static void ClearSession()
+        {
+            try
+            {
+                if (File.Exists(SessionFilePath))
+                    File.Delete(SessionFilePath);
+                Console.WriteLine("✅ Session cleared");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Clear session error: {ex.Message}");
             }
         }
 

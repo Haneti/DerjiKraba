@@ -15,6 +15,7 @@ namespace AvaloniaApplication1.ViewModels
     public partial class InventoryViewModel : ViewModelBase
     {
         private readonly ApiService _apiService;
+        private readonly User _currentUser;
         
         [ObservableProperty]
         private ObservableCollection<InventoryItemViewModel> _inventoryItems = new();
@@ -70,9 +71,10 @@ namespace AvaloniaApplication1.ViewModels
         public bool ShowShortageWarning => HasShortages;
         public bool ShowSuccess => !HasShortages && !HasSurpluses;
         
-        public InventoryViewModel()
+        public InventoryViewModel(User currentUser)
         {
-            _apiService = new ApiService();
+            _currentUser = currentUser;
+            _apiService = new ApiService(currentUser.Token, currentUser.SessionKey);
             // Auto-load products on initialization (like mobile app)
             _ = InitializeAsync();
         }

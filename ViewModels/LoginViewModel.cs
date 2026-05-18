@@ -247,7 +247,7 @@ namespace AvaloniaApplication1.ViewModels
 
             try
             {
-                var user = await _apiService.VerifyCodeAsync(normalizedPhone, VerificationCode);
+                var (user, token, sessionKey) = await _apiService.VerifyCodeAsync(normalizedPhone, VerificationCode);
                 
                 if (user != null)
                 {
@@ -263,7 +263,10 @@ namespace AvaloniaApplication1.ViewModels
                         return;
                     }
                     
+                    user.Token = token;
+                    user.SessionKey = sessionKey;
                     CurrentUser = user;
+                    await ApiService.SaveSessionAsync(user);
                     LoginCompleted?.Invoke(user);
                 }
                 else

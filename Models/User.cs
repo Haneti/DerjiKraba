@@ -26,6 +26,12 @@ namespace AvaloniaApplication1.Models
         [JsonPropertyName("isVerified")]
         public bool IsVerified { get; set; }
 
+        [JsonPropertyName("token")]
+        public string? Token { get; set; }
+
+        [JsonPropertyName("sessionKey")]
+        public string? SessionKey { get; set; }
+
         public bool IsStaff => Role == "admin" || Role == "employee" || Role == "owner";
         
         public bool IsOwner => Role == "admin" || Role == "owner";

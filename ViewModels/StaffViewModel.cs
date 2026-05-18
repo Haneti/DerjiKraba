@@ -77,7 +77,7 @@ namespace AvaloniaApplication1.ViewModels
         public StaffViewModel(User currentUser)
         {
             _currentUser = currentUser;
-            _apiService = new ApiService();
+            _apiService = new ApiService(currentUser.Token, currentUser.SessionKey);
             SelectedRole = "employee";
             _ = LoadAllUsersAsync();
         }

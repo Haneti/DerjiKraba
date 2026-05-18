@@ -34,7 +34,7 @@ namespace AvaloniaApplication1.ViewModels
         public OrdersViewModel(User currentUser)
         {
             _currentUser = currentUser;
-            _apiService = new ApiService();
+            _apiService = new ApiService(currentUser.Token, currentUser.SessionKey);
             LoadOrdersCommand.Execute(null);
         }
 

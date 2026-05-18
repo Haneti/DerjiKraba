@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using AvaloniaApplication1.Models;
 using AvaloniaApplication1.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -53,6 +54,36 @@ namespace AvaloniaApplication1.ViewModels
             if (CurrentView is LoginViewModel loginVm)
             {
                 loginVm.LoginCompleted += OnLoginCompleted;
+            }
+            
+            _ = RestoreSessionAsync();
+        }
+
+        private async Task RestoreSessionAsync()
+        {
+            try
+            {
+                var savedUser = await ApiService.LoadSessionAsync();
+                if (savedUser != null && !string.IsNullOrEmpty(savedUser.Token) && !string.IsNullOrEmpty(savedUser.SessionKey))
+                {
+                    var api = new ApiService(savedUser.Token, savedUser.SessionKey);
+                    var currentUser = await api.GetCurrentUserAsync();
+                    if (currentUser != null && currentUser.IsStaff)
+                    {
+                        currentUser.Token = savedUser.Token;
+                        currentUser.SessionKey = savedUser.SessionKey;
+                        OnLoginCompleted(currentUser);
+                        Console.WriteLine($"✅ Session restored for {currentUser.FullName}");
+                    }
+                    else
+                    {
+                        ApiService.ClearSession();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Session restore error: {ex.Message}");
             }
         }
 
@@ -131,7 +162,7 @@ namespace AvaloniaApplication1.ViewModels
                 return;
             }
                     
-            CurrentView = new InventoryViewModel();
+            CurrentView = new InventoryViewModel(CurrentUser);
             CurrentViewTitle = "Инвентаризация";
         }
         
@@ -151,6 +182,7 @@ namespace AvaloniaApplication1.ViewModels
         [RelayCommand]
         private void Logout()
         {
+            ApiService.ClearSession();
             CurrentUser = null;
             IsLoggedIn = false;
             ShowProducts = false;
