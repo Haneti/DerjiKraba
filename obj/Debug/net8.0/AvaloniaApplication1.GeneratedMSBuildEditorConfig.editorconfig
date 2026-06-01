@@ -7,49 +7,52 @@ build_property.AvaloniaNameGeneratorFilterByNamespace = *
 build_property.AvaloniaNameGeneratorViewFileNamingStrategy = NamespaceAndClassName
 build_property.AvaloniaNameGeneratorAttachDevTools = true
 build_property.TargetFramework = net8.0
+build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.TargetFrameworkVersion = v8.0
 build_property.TargetPlatformMinVersion = 
 build_property.UsingMicrosoftNETSdkWeb = 
 build_property.ProjectTypeGuids = 
 build_property.InvariantGlobalization = 
 build_property.PlatformNeutralAssembly = 
 build_property.EnforceExtendedAnalyzerRules = 
+build_property.EntryPointFilePath = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = AvaloniaApplication1
-build_property.ProjectDir = /Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/
+build_property.ProjectDir = /Users/haneti/Desktop/DerjiKraba/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.EffectiveAnalysisLevelStyle = 8.0
 build_property.EnableCodeStyleSeverity = 
 
-[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/App.axaml]
+[/Users/haneti/Desktop/DerjiKraba/App.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
-[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/ImageCacheCleanupView.axaml]
+[/Users/haneti/Desktop/DerjiKraba/Views/ImageCacheCleanupView.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
-[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/ImageViewerWindow.axaml]
+[/Users/haneti/Desktop/DerjiKraba/Views/ImageViewerWindow.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
-[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/InventoryView.axaml]
+[/Users/haneti/Desktop/DerjiKraba/Views/InventoryView.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
-[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/LoginView.axaml]
+[/Users/haneti/Desktop/DerjiKraba/Views/LoginView.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
-[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/MainWindow.axaml]
+[/Users/haneti/Desktop/DerjiKraba/Views/MainWindow.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
-[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/OrderMapView.axaml]
+[/Users/haneti/Desktop/DerjiKraba/Views/OrderMapView.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
-[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/OrdersView.axaml]
+[/Users/haneti/Desktop/DerjiKraba/Views/OrdersView.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
-[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/ProductsView.axaml]
+[/Users/haneti/Desktop/DerjiKraba/Views/ProductsView.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
-[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/StaffView.axaml]
+[/Users/haneti/Desktop/DerjiKraba/Views/StaffView.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
-[/Users/haneti/Desktop/DerjiKrabaDesktop/DerjiKraba/Views/SupportView.axaml]
+[/Users/haneti/Desktop/DerjiKraba/Views/SupportView.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml

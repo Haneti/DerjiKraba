@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using AvaloniaApplication1.Controls;
 using System;
+using System.Collections.Specialized;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ namespace AvaloniaApplication1.Views
     public partial class SupportView : UserControl
     {
         private static ImageViewerWindow? _imageViewerInstance;
+        private ViewModels.SupportViewModel? _vm;
+
         public SupportView()
         {
             InitializeComponent();
@@ -21,16 +24,26 @@ namespace AvaloniaApplication1.Views
 
         private void OnDataContextChanged(object? sender, EventArgs e)
         {
-            // Auto-scroll to bottom when messages change
-            if (MessagesItemsControl != null)
+            // Unsubscribe from previous VM
+            if (_vm != null)
             {
-                MessagesItemsControl.PropertyChanged += (s, args) =>
-                {
-                    if (args.Property.Name == nameof(ItemsControl.ItemsSource))
-                    {
-                        ScrollToBottom();
-                    }
-                };
+                _vm.Messages.CollectionChanged -= OnMessagesCollectionChanged;
+                _vm = null;
+            }
+
+            // Subscribe to new VM's Messages collection for auto-scroll
+            if (DataContext is ViewModels.SupportViewModel vm)
+            {
+                _vm = vm;
+                vm.Messages.CollectionChanged += OnMessagesCollectionChanged;
+            }
+        }
+
+        private void OnMessagesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Add || e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                ScrollToBottom();
             }
         }
 
@@ -38,8 +51,8 @@ namespace AvaloniaApplication1.Views
         {
             if (MessagesScrollViewer != null)
             {
-                // Delay to allow layout to update
-                Task.Delay(100).ContinueWith(_ =>
+                // Short delay to allow layout to update after collection change
+                Task.Delay(50).ContinueWith(_ =>
                 {
                     Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                     {

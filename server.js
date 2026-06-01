@@ -250,9 +250,15 @@ const upload = multer({
 
 // Глобальный лог каждого запроса
 app.use((req, _res, next) => {
-  console.log(new Date().toISOString(), req.method, req.url, Object.keys(req.body || {}).length ? req.body : '');
+  req.originalUrlWithApi = req.url;          // если нужен для логов
+  if (req.url === '/api' || req.url === '/api/') {
+    req.url = '/';
+  } else if (req.url.startsWith('/api/')) {
+    req.url = req.url.slice(4);              // "/api/products" → "/products"
+  }
   next();
 });
+
 
 const pool = mysql.createPool((process.env.DB_URL || 'mysql://krab:S3cure!Pass@127.0.0.1:3306/derjikrab') + '?charset=utf8mb4');
 const db = pool;

@@ -76,7 +76,7 @@ namespace AvaloniaApplication1.Controls
                 // Check if cancelled
                 token.ThrowIfCancellationRequested();
 
-                // Then load from cache asynchronously
+                // Then load from cache asynchronously (heavy work already offloaded inside GetImageAsync)
                 var bitmap = await ImageCacheManager.Instance.GetImageAsync(SourceUrl, ImageHash);
                 
                 // Check if this is still the current request and not cancelled
@@ -119,63 +119,32 @@ namespace AvaloniaApplication1.Controls
             }
         }
 
-        private static IImage? GeneratePlaceholderForProduct(string? productName)
+        protected override Size ArrangeOverride(Size finalSize)
         {
+            // Protect against corrupted bitmaps that throw on Size access
+            if (Source == null)
+            {
+                return base.ArrangeOverride(finalSize);
+            }
+
             try
             {
-                const int width = 200;
-                const int height = 160;
-                
-                var bitmap = new RenderTargetBitmap(new PixelSize(width, height), new Vector(96, 96));
-                
-                using (var context = bitmap.CreateDrawingContext())
-                {
-                    // Light blue background
-                    var lightBlueBrush = new SolidColorBrush(Color.FromRgb(219, 234, 254));
-                    context.FillRectangle(lightBlueBrush, new Rect(0, 0, width, height));
-                    
-                    // Get emoji based on product name or use default crab
-                    var emoji = !string.IsNullOrEmpty(productName) 
-                        ? GetEmojiForProduct(productName) 
-                        : "🦀";
-                    
-                    // Draw emoji centered - use system default font that supports emoji
-                    var formattedText = new FormattedText(
-                        emoji,
-                        System.Globalization.CultureInfo.CurrentCulture,
-                        FlowDirection.LeftToRight,
-                        Typeface.Default,
-                        80,
-                        Brushes.Black);
-                    
-                    var textX = (width - formattedText.Width) / 2;
-                    var textY = (height - formattedText.Height) / 2;
-                    
-                    context.DrawText(formattedText, new Point(textX, textY));
-                }
-                
-                return bitmap;
+                return base.ArrangeOverride(finalSize);
             }
             catch
             {
-                // Fallback: return null, control will use default behavior
-                return null;
+                // If arrange fails due to invalid bitmap, clear source and retry
+                Source = null;
+                return base.ArrangeOverride(finalSize);
             }
         }
 
-        private static string GetEmojiForProduct(string productName)
+        private static IImage? GeneratePlaceholderForProduct(string? productName)
         {
-            var lower = productName.ToLowerInvariant();
-            
-            if (lower.Contains("краб") || lower.Contains("crab")) return "🦀";
-            if (lower.Contains("рыб") || lower.Contains("fish")) return "🐟";
-            if (lower.Contains("креветк") || lower.Contains("shrimp")) return "🦐";
-            if (lower.Contains("кальмар") || lower.Contains("squid")) return "🦑";
-            if (lower.Contains("миди") || lower.Contains("clam")) return "🐚";
-            if (lower.Contains("осьминог") || lower.Contains("octopus")) return "🐙";
-            
-            // Default to crab for unknown products
-            return "🦀";
+            // Return null so the parent Border background shows through.
+            // Using RenderTargetBitmap as a placeholder caused NRE on window resize/fullscreen
+            // because it holds a reference to the compositor surface that becomes invalid.
+            return null;
         }
     }
 }

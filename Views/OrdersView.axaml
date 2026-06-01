@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="using:AvaloniaApplication1.Views"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
              x:Class="AvaloniaApplication1.Views.OrdersView">
 
@@ -31,24 +32,38 @@
                    Margin="0,0,10,0"
                    Background="{DynamicResource SystemAltHighColor}"
                    IsVisible="{Binding !SelectedOrder}">
-                <DataGrid ItemsSource="{Binding Orders}"
-                         SelectedItem="{Binding SelectedOrder}"
-                         AutoGenerateColumns="False"
-                         IsReadOnly="True"
-                         CanUserResizeColumns="True"
-                         CanUserSortColumns="True"
-                         GridLinesVisibility="Horizontal"
-                         HeadersVisibility="All">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="№" Binding="{Binding Id, StringFormat={}{0:0000}}" Width="120"/>
-                        <DataGridTextColumn Header="Дата" Binding="{Binding OrderDate, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="150"/>
-                        <DataGridTextColumn Header="Клиент" Binding="{Binding Customer.FullName}" Width="220"/>
-                        <DataGridTextColumn Header="Телефон" Binding="{Binding Customer.Phone}" Width="135"/>
-                        <DataGridTextColumn Header="Сумма" Binding="{Binding TotalAmount, StringFormat={}{0:F2} ₽}" Width="120"/>
-                        <DataGridTextColumn Header="Статус" Binding="{Binding StatusDisplay}" Width="150"/>
-                        <DataGridTextColumn Header="Тип" Binding="{Binding DeliveryTypeDisplay}" Width="150"/>
-                    </DataGrid.Columns>
-                </DataGrid>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <DataGrid ItemsSource="{Binding Orders}"
+                             SelectedItem="{Binding SelectedOrder}"
+                             AutoGenerateColumns="False"
+                             IsReadOnly="True"
+                             CanUserResizeColumns="True"
+                             CanUserSortColumns="True"
+                             GridLinesVisibility="Horizontal"
+                             HeadersVisibility="All">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="№" Binding="{Binding Id, StringFormat={}{0:0000}}" Width="120"/>
+                            <DataGridTextColumn Header="Дата" Binding="{Binding OrderDate, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="150"/>
+                            <DataGridTextColumn Header="Клиент" Binding="{Binding Customer.FullName}" Width="220"/>
+                            <DataGridTemplateColumn Header="Телефон" Width="135">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Customer.Phone}" 
+                                                   VerticalAlignment="Center"
+                                                   Margin="5,0"
+                                                   Foreground="{DynamicResource SystemAccentColor}"
+                                                   Cursor="Hand"
+                                                   DoubleTapped="OnPhoneDoubleTapped"
+                                                   Tag="{Binding}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Сумма" Binding="{Binding TotalAmount, StringFormat={}{0:F2} ₽}" Width="120"/>
+                            <DataGridTextColumn Header="Статус" Binding="{Binding StatusDisplay}" Width="150"/>
+                            <DataGridTextColumn Header="Тип" Binding="{Binding DeliveryTypeDisplay}" Width="150"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </ScrollViewer>
             </Border>
 
             <!-- Order Details Panel - Theme aware -->
@@ -58,7 +73,7 @@
                    Padding="15"
                    Margin="10,0,0,0"
                    IsVisible="{Binding SelectedOrder}">
-                <ScrollViewer>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="15">
                         <TextBlock Text="Детали заказа" 
                                   FontSize="18" 
@@ -97,14 +112,63 @@
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Клиент" FontWeight="Bold" FontSize="14"/>
                                 <TextBlock FontSize="14" Text="{Binding SelectedOrder.Customer.FullName}"/>
-                                <TextBlock FontSize="14">
+                                <TextBlock FontSize="14" DoubleTapped="OnPhoneDoubleTapped" Tag="{Binding SelectedOrder}" Cursor="Hand">
                                     <Run>📞 </Run>
-                                    <Run Text="{Binding SelectedOrder.Customer.Phone}"/>
+                                    <Run Text="{Binding SelectedOrder.Customer.Phone}" Foreground="{DynamicResource SystemAccentColor}"/>
                                 </TextBlock>
                                 <TextBlock FontSize="14" IsVisible="{Binding SelectedOrder.Customer.Address, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                     <Run>📍 </Run>
                                     <Run Text="{Binding SelectedOrder.Customer.Address}"/>
                                 </TextBlock>
+                                <Button Content="📋 История заказов" 
+                                        Command="{Binding OpenCustomerStatsCommand}"
+                                        CommandParameter="{Binding SelectedOrder.UserId}"
+                                        Background="{DynamicResource SystemAccentColor}"
+                                        Foreground="White"
+                                        HorizontalAlignment="Left"
+                                        Padding="8,4"
+                                        FontSize="12"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Delivery Details -->
+                        <Border Background="{DynamicResource SystemAltHighColor}" CornerRadius="5" Padding="10" BorderThickness="1" BorderBrush="{DynamicResource SystemBaseMediumLowColor}"
+                                IsVisible="{Binding SelectedOrder.ParsedDeliveryDetails, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="🚚 Детали доставки" FontWeight="Bold" FontSize="14"/>
+                                <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock FontSize="13" TextWrapping="Wrap" IsVisible="{Binding SelectedOrder.ParsedDeliveryDetails.Address, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                            <Run FontWeight="SemiBold">Адрес: </Run>
+                                            <Run Text="{Binding SelectedOrder.ParsedDeliveryDetails.Address}"/>
+                                        </TextBlock>
+                                        <TextBlock FontSize="13" TextWrapping="Wrap" IsVisible="{Binding SelectedOrder.ParsedDeliveryDetails.Entrance, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                            <Run FontWeight="SemiBold">Подъезд: </Run>
+                                            <Run Text="{Binding SelectedOrder.ParsedDeliveryDetails.Entrance}"/>
+                                        </TextBlock>
+                                        <TextBlock FontSize="13" TextWrapping="Wrap" IsVisible="{Binding SelectedOrder.ParsedDeliveryDetails.Floor, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                            <Run FontWeight="SemiBold">Этаж: </Run>
+                                            <Run Text="{Binding SelectedOrder.ParsedDeliveryDetails.Floor}"/>
+                                        </TextBlock>
+                                        <TextBlock FontSize="13" TextWrapping="Wrap" IsVisible="{Binding SelectedOrder.ParsedDeliveryDetails.Apartment, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                            <Run FontWeight="SemiBold">Квартира: </Run>
+                                            <Run Text="{Binding SelectedOrder.ParsedDeliveryDetails.Apartment}"/>
+                                        </TextBlock>
+                                        <TextBlock FontSize="13" TextWrapping="Wrap" IsVisible="{Binding SelectedOrder.ParsedDeliveryDetails.Intercom, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                            <Run FontWeight="SemiBold">Домофон: </Run>
+                                            <Run Text="{Binding SelectedOrder.ParsedDeliveryDetails.Intercom}"/>
+                                        </TextBlock>
+                                        <TextBlock FontSize="13" IsVisible="{Binding SelectedOrder.ParsedDeliveryDetails.IntercomBroken}">
+                                            <Run Foreground="#DC2626">⚠️ Домофон не работает</Run>
+                                        </TextBlock>
+                                        <TextBlock FontSize="13" IsVisible="{Binding SelectedOrder.ParsedDeliveryDetails.Latitude, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                            <Run FontWeight="SemiBold">Координаты: </Run>
+                                            <Run Text="{Binding SelectedOrder.ParsedDeliveryDetails.Latitude}"/>
+                                            <Run>, </Run>
+                                            <Run Text="{Binding SelectedOrder.ParsedDeliveryDetails.Longitude}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </ScrollViewer>
                             </StackPanel>
                         </Border>
 
@@ -227,5 +291,31 @@
                 </StackPanel>
             </Border>
         </Grid>
+
+        <!-- Customer Stats Overlay -->
+        <Border Grid.Row="1" 
+                Grid.ColumnSpan="2"
+                Background="{DynamicResource SystemAltHighColor}"
+                CornerRadius="8"
+                IsVisible="{Binding ShowCustomerStats}"
+                Margin="40"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource SystemBaseMediumLowColor}">
+            <Grid RowDefinitions="Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="15,10">
+                    <TextBlock Grid.Column="0" Text="История клиента" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}"/>
+                    <Button Grid.Column="1" Content="✕ Закрыть" 
+                            Command="{Binding CloseCustomerStatsCommand}"
+                            Background="#DC2626"
+                            Foreground="White"
+                            Padding="10,4"/>
+                </Grid>
+                <ContentControl Grid.Row="1" 
+                                Content="{Binding CustomerStatsViewModel}" 
+                                Margin="0,0,0,10"
+                                VerticalAlignment="Stretch"
+                                HorizontalAlignment="Stretch"/>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

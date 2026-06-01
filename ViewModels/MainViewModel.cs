@@ -41,8 +41,8 @@ namespace AvaloniaApplication1.ViewModels
 
         public MainViewModel()
         {
+            // Temp placeholder until session restore completes
             CurrentView = new LoginViewModel();
-            CurrentViewTitle = "Вход";
             
             // Initialize theme
             IsDarkMode = ThemeManager.Instance.CurrentTheme == ThemeMode.Dark;
@@ -50,11 +50,6 @@ namespace AvaloniaApplication1.ViewModels
             {
                 IsDarkMode = mode == ThemeMode.Dark;
             };
-            
-            if (CurrentView is LoginViewModel loginVm)
-            {
-                loginVm.LoginCompleted += OnLoginCompleted;
-            }
             
             _ = RestoreSessionAsync();
         }
@@ -74,6 +69,7 @@ namespace AvaloniaApplication1.ViewModels
                         currentUser.SessionKey = savedUser.SessionKey;
                         OnLoginCompleted(currentUser);
                         Console.WriteLine($"✅ Session restored for {currentUser.FullName}");
+                        return;
                     }
                     else
                     {
@@ -85,6 +81,12 @@ namespace AvaloniaApplication1.ViewModels
             {
                 Console.WriteLine($"❌ Session restore error: {ex.Message}");
             }
+            
+            // No valid session — show login screen
+            var loginVm = new LoginViewModel();
+            loginVm.LoginCompleted += OnLoginCompleted;
+            CurrentView = loginVm;
+            CurrentViewTitle = "Вход";
         }
 
         private void OnLoginCompleted(User? user)

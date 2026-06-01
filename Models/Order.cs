@@ -31,9 +31,11 @@ namespace AvaloniaApplication1.Models
         public bool IntercomBroken { get; set; }
 
         [JsonPropertyName("latitude")]
+        [JsonConverter(typeof(AvaloniaApplication1.Converters.JsonNullableDoubleConverter))]
         public double? Latitude { get; set; }
 
         [JsonPropertyName("longitude")]
+        [JsonConverter(typeof(AvaloniaApplication1.Converters.JsonNullableDoubleConverter))]
         public double? Longitude { get; set; }
 
         public bool IsApartment => HouseType == "apartment";
@@ -120,9 +122,11 @@ namespace AvaloniaApplication1.Models
         public string? DeliveryDetails { get; set; } // JSON с расширенной информацией
 
         [JsonPropertyName("latitude")]
+        [JsonConverter(typeof(AvaloniaApplication1.Converters.JsonNullableDoubleConverter))]
         public double? Latitude { get; set; }
 
         [JsonPropertyName("longitude")]
+        [JsonConverter(typeof(AvaloniaApplication1.Converters.JsonNullableDoubleConverter))]
         public double? Longitude { get; set; }
 
         [JsonPropertyName("totalAmount")]

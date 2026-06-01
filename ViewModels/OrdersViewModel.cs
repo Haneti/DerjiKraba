@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using AvaloniaApplication1.Models;
 using AvaloniaApplication1.Services;
@@ -30,6 +31,12 @@ namespace AvaloniaApplication1.ViewModels
 
         [ObservableProperty]
         private string _filterStatus = "all";
+
+        [ObservableProperty]
+        private bool _showCustomerStats = false;
+
+        [ObservableProperty]
+        private ViewModelBase? _customerStatsViewModel;
 
         public OrdersViewModel(User currentUser)
         {
@@ -100,6 +107,28 @@ namespace AvaloniaApplication1.ViewModels
         partial void OnSelectedOrderChanged(Order? value)
         {
             ErrorMessage = string.Empty;
+        }
+
+        [RelayCommand]
+        private void OpenCustomerStats(string? userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                if (SelectedOrder == null) return;
+                userId = SelectedOrder.UserId;
+            }
+
+            var name = SelectedOrder?.Customer?.FullName ?? "Клиент";
+            var phone = SelectedOrder?.Customer?.Phone ?? "";
+            CustomerStatsViewModel = new CustomerStatsViewModel(userId, name, phone, _apiService);
+            ShowCustomerStats = true;
+        }
+
+        [RelayCommand]
+        private void CloseCustomerStats()
+        {
+            ShowCustomerStats = false;
+            CustomerStatsViewModel = null;
         }
     }
 }

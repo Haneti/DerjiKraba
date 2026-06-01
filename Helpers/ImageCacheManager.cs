@@ -25,6 +25,8 @@ namespace AvaloniaApplication1.Helpers
         
         // Memory cache for loaded bitmaps to avoid reloading from disk every time
         private readonly Dictionary<string, Bitmap> _memoryCache = new();
+        private readonly Dictionary<string, Task<Bitmap?>> _pendingLoads = new();
+        private readonly object _memoryCacheLock = new();
         private const int MaxMemoryCacheItems = 100;
 
         private ImageCacheManager()
@@ -56,54 +58,88 @@ namespace AvaloniaApplication1.Helpers
                 return null;
 
             var cacheKey = ComputeMD5(url);
-            var cacheFilePath = Path.Combine(_cacheDirectory, cacheKey);
-            var hashFilePath = cacheFilePath + ".hash";
 
-            try
+            // Fast path: check memory cache
+            Task<Bitmap?>? pendingTask = null;
+            lock (_memoryCacheLock)
             {
-                // First check memory cache
                 if (_memoryCache.TryGetValue(cacheKey, out var cachedBitmap))
                 {
                     Console.WriteLine($"⚡ Memory cache hit: {url}");
                     return cachedBitmap;
                 }
-                
+
+                // If another caller is already loading this image, capture the task
+                _pendingLoads.TryGetValue(cacheKey, out pendingTask);
+            }
+
+            if (pendingTask != null)
+            {
+                Console.WriteLine($"⏳ Waiting for pending load: {url}");
+                return await pendingTask;
+            }
+
+            // Start the load and register it as pending
+            var loadTask = LoadImageCoreAsync(url, serverHash, cacheKey);
+            lock (_memoryCacheLock)
+            {
+                _pendingLoads[cacheKey] = loadTask;
+            }
+
+            try
+            {
+                var bitmap = await loadTask;
+                return bitmap;
+            }
+            finally
+            {
+                lock (_memoryCacheLock)
+                {
+                    _pendingLoads.Remove(cacheKey);
+                }
+            }
+        }
+
+        private async Task<Bitmap?> LoadImageCoreAsync(string url, string? serverHash, string cacheKey)
+        {
+            var cacheFilePath = Path.Combine(_cacheDirectory, cacheKey);
+            var hashFilePath = cacheFilePath + ".hash";
+
+            try
+            {
                 Console.WriteLine($"🔍 Checking disk cache for: {url}");
-                
+
                 // Check if we have cached version on disk
                 if (File.Exists(cacheFilePath))
                 {
                     Console.WriteLine($"✅ Found cached file: {cacheFilePath}");
-                    
+
                     // If server hash provided, verify it
                     if (!string.IsNullOrEmpty(serverHash))
                     {
                         var storedHash = await ReadStoredHashAsync(hashFilePath);
-                        
+
                         if (storedHash != serverHash)
                         {
                             Console.WriteLine($"⚠️ Hash mismatch. Stored: {storedHash}, Server: {serverHash}. Re-downloading...");
-                            // Delete old files
                             TryDeleteFile(cacheFilePath);
                             TryDeleteFile(hashFilePath);
-                            // Download new version and add to memory cache
-                            var bitmap = await DownloadAndSaveImageAsync(url, serverHash, cacheFilePath, hashFilePath);
+                            var bitmap = await Task.Run(async () => await DownloadAndSaveImageAsync(url, serverHash, cacheFilePath, hashFilePath));
                             AddToMemoryCache(cacheKey, bitmap);
                             return bitmap;
                         }
                         else
                         {
                             Console.WriteLine($"✅ Hashes match! Loading from cache: {url}");
-                            var bitmap = LoadBitmapFromFile(cacheFilePath);
+                            var bitmap = await Task.Run(() => LoadBitmapFromFile(cacheFilePath));
                             AddToMemoryCache(cacheKey, bitmap);
                             return bitmap;
                         }
                     }
                     else
                     {
-                        // No hash to verify, just return cached image
                         Console.WriteLine($"✅ Loading cached image (no hash): {url}");
-                        var bitmap = LoadBitmapFromFile(cacheFilePath);
+                        var bitmap = await Task.Run(() => LoadBitmapFromFile(cacheFilePath));
                         AddToMemoryCache(cacheKey, bitmap);
                         return bitmap;
                     }
@@ -111,7 +147,7 @@ namespace AvaloniaApplication1.Helpers
 
                 // Download from server
                 Console.WriteLine($"📥 No cache found, downloading from server: {url}");
-                var newBitmap = await DownloadAndSaveImageAsync(url, serverHash, cacheFilePath, hashFilePath);
+                var newBitmap = await Task.Run(async () => await DownloadAndSaveImageAsync(url, serverHash, cacheFilePath, hashFilePath));
                 AddToMemoryCache(cacheKey, newBitmap);
                 return newBitmap;
             }
@@ -130,13 +166,13 @@ namespace AvaloniaApplication1.Helpers
         {
             try
             {
-                // Clear memory cache
-                foreach (var bitmap in _memoryCache.Values)
+                // Clear memory cache — do NOT Dispose() bitmaps because UI controls
+                // may still hold references via Image.Source.
+                lock (_memoryCacheLock)
                 {
-                    bitmap.Dispose();
+                    _memoryCache.Clear();
                 }
-                _memoryCache.Clear();
-                
+
                 // Clear disk cache
                 if (Directory.Exists(_cacheDirectory))
                 {
@@ -157,25 +193,28 @@ namespace AvaloniaApplication1.Helpers
         private void AddToMemoryCache(string key, Bitmap? bitmap)
         {
             if (bitmap == null) return;
-            
-            // If already exists, remove old one
-            if (_memoryCache.ContainsKey(key))
+
+            lock (_memoryCacheLock)
             {
-                _memoryCache[key].Dispose();
-                _memoryCache.Remove(key);
+                // If already exists, just replace — do NOT Dispose() because UI controls
+                // may still hold a reference to the old bitmap via Image.Source.
+                if (_memoryCache.ContainsKey(key))
+                {
+                    _memoryCache.Remove(key);
+                }
+
+                // If cache is full, remove oldest item (LRU eviction) without disposing.
+                // The GC will collect when no UI control references the bitmap.
+                if (_memoryCache.Count >= MaxMemoryCacheItems)
+                {
+                    var firstKey = _memoryCache.Keys.First();
+                    _memoryCache.Remove(firstKey);
+                    Console.WriteLine($"🗑 Evicted oldest from memory cache");
+                }
+
+                _memoryCache.Add(key, bitmap);
+                Console.WriteLine($"💾 Added to memory cache. Total items: {_memoryCache.Count}");
             }
-            
-            // If cache is full, remove oldest item (LRU eviction)
-            if (_memoryCache.Count >= MaxMemoryCacheItems)
-            {
-                var firstKey = _memoryCache.Keys.First();
-                _memoryCache[firstKey].Dispose();
-                _memoryCache.Remove(firstKey);
-                Console.WriteLine($"🗑 Evicted oldest from memory cache");
-            }
-            
-            _memoryCache.Add(key, bitmap);
-            Console.WriteLine($"💾 Added to memory cache. Total items: {_memoryCache.Count}");
         }
 
         /// <summary>
@@ -239,7 +278,10 @@ namespace AvaloniaApplication1.Helpers
         /// </summary>
         public string GetMemoryCacheStats()
         {
-            return $"Memory Cache: {_memoryCache.Count}/{MaxMemoryCacheItems} items";
+            lock (_memoryCacheLock)
+            {
+                return $"Memory Cache: {_memoryCache.Count}/{MaxMemoryCacheItems} items";
+            }
         }
 
         /// <summary>
@@ -347,7 +389,10 @@ namespace AvaloniaApplication1.Helpers
                 using var ms = new MemoryStream(imageData);
                 var bitmap = new Bitmap(ms);
 
-                // Save to disk
+                // Validate bitmap immediately to catch corrupted images
+                _ = bitmap.PixelSize;
+
+                // Save to disk (caller already runs this on background thread via Task.Run)
                 TryDeleteFile(cacheFilePath);
                 bitmap.Save(cacheFilePath);
 
@@ -376,7 +421,10 @@ namespace AvaloniaApplication1.Helpers
         {
             try
             {
-                return new Bitmap(path);
+                var bitmap = new Bitmap(path);
+                // Validate bitmap immediately to catch corrupted files that throw on Size access
+                _ = bitmap.PixelSize;
+                return bitmap;
             }
             catch (Exception ex)
             {
