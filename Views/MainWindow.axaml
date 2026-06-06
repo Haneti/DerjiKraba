@@ -16,6 +16,24 @@
         <vm:MainViewModel/>
     </Design.DataContext>
 
+    <Window.Styles>
+        <Style Selector="TextBlock.blink">
+            <Style.Animations>
+                <Animation Duration="0:0:0.8" IterationCount="INFINITE">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="1"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="50%">
+                        <Setter Property="Opacity" Value="0.3"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+    </Window.Styles>
+
     <Grid RowDefinitions="Auto,*">
         <!-- Top Bar - Uses system accent color -->
         <Border Grid.Row="0" 
@@ -24,35 +42,108 @@
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="15">
                     <!-- Navigation Buttons -->
-                    <Button Content="📦 Товары" 
-                           Command="{Binding NavigateToProductsCommand}"
+                    <Button Command="{Binding NavigateToProductsCommand}"
                            IsVisible="{Binding ShowProducts}"
                            Background="{DynamicResource SystemAccentColor}"
-                           Foreground="White"/>
-                    
-                    <Button Content="🛒 Заказы" 
-                           Command="{Binding NavigateToOrdersCommand}"
+                           Foreground="White">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Image Source="avares://AvaloniaApplication1/icons/items.png"
+                                   Width="20"
+                                   Height="20"/>
+                            <TextBlock Text="Товары"
+                                       VerticalAlignment="Center"
+                                       Foreground="White"
+                                       Classes.blink="{Binding HasExpiredProducts}"/>
+                            <Border IsVisible="{Binding HasExpiredProducts}"
+                                    Background="{StaticResource DangerBrush}"
+                                    CornerRadius="10"
+                                    Padding="6,2"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding ExpiredProductsCount}"
+                                           FontSize="10"
+                                           Foreground="White"
+                                           FontWeight="Bold"/>
+                            </Border>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavigateToOrdersCommand}"
                            IsVisible="{Binding ShowOrders}"
                            Background="{DynamicResource SystemAccentColor}"
-                           Foreground="White"/>
-                    
-                    <Button Content="📋 Инвентаризация" 
-                           Command="{Binding NavigateToInventoryCommand}"
+                           Foreground="White">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Image Source="avares://AvaloniaApplication1/icons/orders.png"
+                                   Width="20"
+                                   Height="20"/>
+                            <TextBlock Text="Заказы"
+                                       VerticalAlignment="Center"
+                                       Foreground="White"
+                                       Classes.blink="{Binding HasPendingOrders}"/>
+                            <Border IsVisible="{Binding HasPendingOrders}"
+                                    Background="{StaticResource DangerBrush}"
+                                    CornerRadius="10"
+                                    Padding="6,2"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding PendingOrdersCount}"
+                                           FontSize="10"
+                                           Foreground="White"
+                                           FontWeight="Bold"/>
+                            </Border>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavigateToInventoryCommand}"
                            IsVisible="{Binding ShowInventory}"
                            Background="{DynamicResource SystemAccentColor}"
-                           Foreground="White"/>
-                    
-                    <Button Content="💬 Поддержка" 
-                           Command="{Binding NavigateToSupportCommand}"
+                           Foreground="White">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Image Source="avares://AvaloniaApplication1/icons/Inventory.png"
+                                   Width="20"
+                                   Height="20"/>
+                            <TextBlock Text="Инвентаризация"
+                                       VerticalAlignment="Center"
+                                       Foreground="White"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavigateToSupportCommand}"
                            IsVisible="{Binding ShowSupport}"
                            Background="{DynamicResource SystemAccentColor}"
-                           Foreground="White"/>
-                    
-                    <Button Content="👥 Сотрудники" 
-                           Command="{Binding NavigateToStaffCommand}"
+                           Foreground="White">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Image Source="avares://AvaloniaApplication1/icons/SupportChat.png"
+                                   Width="20"
+                                   Height="20"/>
+                            <TextBlock Text="Поддержка"
+                                       VerticalAlignment="Center"
+                                       Foreground="White"
+                                       Classes.blink="{Binding HasPendingSupport}"/>
+                            <Border IsVisible="{Binding HasPendingSupport}"
+                                    Background="{StaticResource DangerBrush}"
+                                    CornerRadius="10"
+                                    Padding="6,2"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding PendingSupportCount}"
+                                           FontSize="10"
+                                           Foreground="White"
+                                           FontWeight="Bold"/>
+                            </Border>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavigateToStaffCommand}"
                            IsVisible="{Binding ShowStaffManagement}"
                            Background="{DynamicResource SystemAccentColor}"
-                           Foreground="White"/>
+                           Foreground="White">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Image Source="avares://AvaloniaApplication1/icons/Employees.png"
+                                   Width="20"
+                                   Height="20"/>
+                            <TextBlock Text="Сотрудники"
+                                       VerticalAlignment="Center"
+                                       Foreground="White"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
                 <!-- User Info, Theme Toggle and Logout -->
@@ -68,15 +159,12 @@
                     <Button Command="{Binding ToggleThemeCommand}"
                            VerticalAlignment="Center"
                            Background="Transparent"
-                           Foreground="White"
-                           Padding="2,1"
-                           FontSize="10"
-                           Width="24"
-                           Height="24">
-                        <TextBlock Text="{Binding IsDarkMode, Converter={StaticResource ThemeIconConverter}}"
-                                  FontSize="12"
-                                  VerticalAlignment="Center"
-                                  HorizontalAlignment="Center"/>
+                           Padding="2"
+                           Width="28"
+                           Height="28">
+                        <Image Source="{Binding IsDarkMode, Converter={StaticResource ThemeIconConverter}}"
+                               Width="18"
+                               Height="18"/>
                     </Button>
                     
                     <Button Content="Выход" 

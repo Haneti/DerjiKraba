@@ -48,6 +48,24 @@ namespace AvaloniaApplication1.Models
         }
         
         /// <summary>
+        /// Russian unit display
+        /// </summary>
+        [JsonIgnore]
+        public string UnitDisplay => UnitType == "piece" ? "шт" : "кг";
+
+        /// <summary>
+        /// Display formatted system quantity
+        /// </summary>
+        [JsonIgnore]
+        public string SystemQuantityDisplay => $"Система: {SystemQuantity:F3} {UnitDisplay}";
+
+        /// <summary>
+        /// Display formatted actual quantity
+        /// </summary>
+        [JsonIgnore]
+        public string ActualQuantityDisplay => $"Факт: {ActualQuantity:F3} {UnitDisplay}";
+
+        /// <summary>
         /// Display formatted difference
         /// </summary>
         [JsonIgnore]
@@ -56,7 +74,7 @@ namespace AvaloniaApplication1.Models
             get
             {
                 var sign = Difference >= 0 ? "+" : "";
-                return $"{sign}{Difference:F2} {UnitType}";
+                return $"{sign}{Difference:F2} {UnitDisplay}";
             }
         }
         

@@ -8,10 +8,15 @@
     <Grid RowDefinitions="Auto,Auto,*" Margin="20">
         <!-- Header -->
         <StackPanel Grid.Row="0" Spacing="5" Margin="0,0,0,15">
-            <TextBlock Text="📊 Статистика клиента" 
-                       FontSize="20" 
-                       FontWeight="Bold"
-                       Foreground="{DynamicResource SystemBaseHighColor}"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Image Source="avares://AvaloniaApplication1/icons/stats.png"
+                       Width="24"
+                       Height="24"/>
+                <TextBlock Text="Статистика клиента" 
+                           FontSize="20" 
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource SystemBaseHighColor}"/>
+            </StackPanel>
             <TextBlock Text="{Binding CustomerName}" 
                        FontSize="16"
                        Foreground="{DynamicResource SystemBaseHighColor}"/>
@@ -71,24 +76,43 @@
             <Grid RowDefinitions="Auto,*">
                 <TextBlock Grid.Row="0" Text="История заказов" FontWeight="Bold" FontSize="14" Margin="0,0,0,10" Foreground="{DynamicResource SystemBaseHighColor}"/>
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Orders}">
+                    <ItemsControl ItemsSource="{Binding Orders}" Padding="0,0,14,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="{DynamicResource SystemAltLowColor}" CornerRadius="5" Padding="10" Margin="0,0,0,6">
-                                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2">
-                                            <TextBlock Text="{Binding StatusDisplay}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}"/>
-                                            <TextBlock FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}">
-                                                <Run Text="{Binding DeliveryTypeDisplay}"/>
-                                                <Run Text=" | "/>
-                                                <Run Text="{Binding Items.Count}"/>
-                                                <Run> товаров</Run>
-                                            </TextBlock>
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="1" Text="{Binding OrderDate, StringFormat={}{0:dd.MM.yyyy}}" FontSize="12" VerticalAlignment="Center" Margin="10,0" Foreground="{DynamicResource SystemBaseMediumColor}"/>
-                                        <TextBlock Grid.Column="2" Text="{Binding TotalAmount, StringFormat={}{0:F2} ₽}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource SystemBaseHighColor}"/>
-                                    </Grid>
-                                </Border>
+                                <Expander Background="{DynamicResource SystemAltLowColor}" CornerRadius="5" Margin="0,0,0,6" Padding="10">
+                                    <Expander.Header>
+                                        <Grid ColumnDefinitions="*,Auto,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="{Binding StatusDisplay}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}"/>
+                                                <TextBlock FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}">
+                                                    <Run Text="{Binding DeliveryTypeDisplay}"/>
+                                                    <Run Text=" | "/>
+                                                    <Run Text="{Binding Items.Count}"/>
+                                                    <Run> товаров</Run>
+                                                </TextBlock>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding OrderDate, StringFormat={}{0:dd.MM.yyyy}}" FontSize="12" VerticalAlignment="Center" Margin="10,0" Foreground="{DynamicResource SystemBaseMediumColor}"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding TotalAmount, StringFormat={}{0:F2} ₽}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource SystemBaseHighColor}"/>
+                                        </Grid>
+                                    </Expander.Header>
+                                    <StackPanel Spacing="8" Margin="0,8,0,0">
+                                        <TextBlock Text="Состав заказа:" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}"/>
+                                        <ItemsControl ItemsSource="{Binding Items}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{DynamicResource SystemAltHighColor}" CornerRadius="4" Padding="8" Margin="0,0,0,4">
+                                                        <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                                                            <TextBlock Grid.Column="0" Text="{Binding ProductName}" FontSize="12" Foreground="{DynamicResource SystemBaseHighColor}" TextWrapping="Wrap"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat='{}{0:F2}'}" FontSize="12" Foreground="{DynamicResource SystemBaseMediumColor}" Margin="10,0,0,0"/>
+                                                            <TextBlock Grid.Column="2" Text="{Binding PricePerKg, StringFormat='{}{0:F2} ₽'}" FontSize="12" Foreground="{DynamicResource SystemBaseMediumColor}" Margin="10,0,0,0"/>
+                                                            <TextBlock Grid.Column="3" Text="{Binding Total, StringFormat='{}{0:F2} ₽'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SystemAccentColor}" Margin="10,0,0,0"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Expander>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

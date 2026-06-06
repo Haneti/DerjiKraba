@@ -9,27 +9,49 @@
     <Grid RowDefinitions="Auto,Auto,*" Margin="20">
         <!-- Header -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,20">
-            <TextBlock Text="📋 Инвентаризация" 
-                      FontSize="24" 
-                      FontWeight="Bold"
-                      Foreground="{DynamicResource SystemBaseHighColor}"/>
+            <StackPanel Orientation="Horizontal"
+                        Spacing="10"
+                        VerticalAlignment="Center">
+                <Image Source="avares://AvaloniaApplication1/icons/Inventory.png"
+                       Width="28"
+                       Height="28"/>
+                <TextBlock Text="Инвентаризация" 
+                          FontSize="24" 
+                          FontWeight="Bold"
+                          Foreground="{DynamicResource SystemBaseHighColor}"/>
+            </StackPanel>
             
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
-                <Button Content="🔄 Обновить" 
-                       Command="{Binding StartInventoryCommand}"
+                <Button Command="{Binding StartInventoryCommand}"
                        Classes="Primary"
                        Background="#3B82F6"
-                       Foreground="White"/>
+                       Foreground="White">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Image Source="avares://AvaloniaApplication1/icons/Refrash.png"
+                               Width="16" Height="16"/>
+                        <TextBlock Text="Обновить" Foreground="White"/>
+                    </StackPanel>
+                </Button>
                 
-                <Button Content="❌ Отмена" 
-                       Command="{Binding CancelInventoryCommand}"
+                <Button Command="{Binding CancelInventoryCommand}"
                        Background="#6B7280"
-                       Foreground="White"/>
-                <Button Content="✓ Завершить" 
-                       Command="{Binding FinishInventoryCommand}"
+                       Foreground="White">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Image Source="avares://AvaloniaApplication1/icons/cancel.png"
+                               Width="16" Height="16"/>
+                        <TextBlock Text="Отмена" Foreground="White"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding FinishInventoryCommand}"
                        Classes="Primary"
                        Background="#3B82F6"
-                       Foreground="White"/>
+                       Foreground="White">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Image Source="avares://AvaloniaApplication1/icons/Accept.png"
+                               Width="16" Height="16"/>
+                        <TextBlock Text="Завершить" Foreground="White"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Grid>
 
@@ -100,7 +122,11 @@
                IsVisible="{Binding !HasInventoryStarted}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
                 <ProgressBar IsIndeterminate="True" Width="200" IsVisible="{Binding IsProcessing}"/>
-                <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center" IsVisible="{Binding !IsProcessing}"/>
+                <Image Source="avares://AvaloniaApplication1/icons/Inventory.png"
+                       Width="64"
+                       Height="64"
+                       HorizontalAlignment="Center"
+                       IsVisible="{Binding !IsProcessing}"/>
                 <TextBlock Text="Загрузка товаров..." FontSize="18" HorizontalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}" IsVisible="{Binding IsProcessing}"/>
                 <TextBlock Text="Нет товаров для инвентаризации" FontSize="18" HorizontalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}" IsVisible="{Binding !IsProcessing}"/>
             </StackPanel>
@@ -242,12 +268,12 @@
                                                             <TextBlock Text="{Binding ProductName}" 
                                                                       FontWeight="SemiBold" FontSize="14"
                                                                       Foreground="{DynamicResource SystemBaseHighColor}"/>
-                                                            <TextBlock Text="{Binding SystemQuantity, StringFormat='{}Система: {0:F3} кг'}" 
+                                                            <TextBlock Text="{Binding SystemQuantityDisplay}" 
                                                                       FontSize="11" 
                                                                       Foreground="{DynamicResource SystemBaseMediumColor}"/>
                                                         </StackPanel>
                                                         <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="2">
-                                                            <TextBlock Text="{Binding ActualQuantity, StringFormat='{}Факт: {0:F3} кг'}" 
+                                                            <TextBlock Text="{Binding ActualQuantityDisplay}" 
                                                                       FontSize="11" FontWeight="SemiBold"
                                                                       Foreground="#DC2626"/>
                                                             <TextBlock Text="{Binding DisplayDifference}" 
@@ -288,12 +314,12 @@
                                                             <TextBlock Text="{Binding ProductName}" 
                                                                       FontWeight="SemiBold" FontSize="14"
                                                                       Foreground="{DynamicResource SystemBaseHighColor}"/>
-                                                            <TextBlock Text="{Binding SystemQuantity, StringFormat='{}Система: {0:F3} кг'}" 
+                                                            <TextBlock Text="{Binding SystemQuantityDisplay}" 
                                                                       FontSize="11" 
                                                                       Foreground="{DynamicResource SystemBaseMediumColor}"/>
                                                         </StackPanel>
                                                         <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="2">
-                                                            <TextBlock Text="{Binding ActualQuantity, StringFormat='{}Факт: {0:F3} кг'}" 
+                                                            <TextBlock Text="{Binding ActualQuantityDisplay}" 
                                                                       FontSize="11" FontWeight="SemiBold"
                                                                       Foreground="#16A34A"/>
                                                             <TextBlock Text="{Binding DisplayDifference}" 

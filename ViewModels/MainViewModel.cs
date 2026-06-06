@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 using AvaloniaApplication1.Models;
 using AvaloniaApplication1.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -38,6 +40,26 @@ namespace AvaloniaApplication1.ViewModels
 
         [ObservableProperty]
         private bool _isDarkMode = false;
+
+        [ObservableProperty]
+        private int _pendingOrdersCount = 0;
+
+        [ObservableProperty]
+        private int _pendingSupportCount = 0;
+
+        [ObservableProperty]
+        private int _expiredProductsCount = 0;
+
+        [ObservableProperty]
+        private bool _hasPendingOrders = false;
+
+        [ObservableProperty]
+        private bool _hasPendingSupport = false;
+
+        [ObservableProperty]
+        private bool _hasExpiredProducts = false;
+
+        private Timer? _pollTimer;
 
         public MainViewModel()
         {
@@ -117,6 +139,67 @@ namespace AvaloniaApplication1.ViewModels
                 
                 // Navigate to products by default
                 NavigateToProducts();
+
+                // Start polling for pending items
+                StartPendingPoll();
+            }
+        }
+
+        private void StartPendingPoll()
+        {
+            _pollTimer?.Dispose();
+            _pollTimer = new Timer(30000); // 30 seconds
+            _pollTimer.Elapsed += async (s, e) => await CheckPendingAsync();
+            _pollTimer.AutoReset = true;
+            _pollTimer.Start();
+            _ = CheckPendingAsync();
+        }
+
+        private void StopPendingPoll()
+        {
+            _pollTimer?.Stop();
+            _pollTimer?.Dispose();
+            _pollTimer = null;
+        }
+
+        private async Task CheckPendingAsync()
+        {
+            if (CurrentUser == null) return;
+
+            try
+            {
+                var api = new ApiService(CurrentUser.Token, CurrentUser.SessionKey);
+
+                // Check orders with status "pending"
+                if (ShowOrders)
+                {
+                    var orders = await api.GetOrdersAsync();
+                    var pendingOrders = orders.Count(o => o.Status == "pending");
+                    PendingOrdersCount = pendingOrders;
+                    HasPendingOrders = pendingOrders > 0;
+                }
+
+                // Check support conversations needing staff reply
+                if (ShowSupport)
+                {
+                    var conversations = await api.GetConversationsAsync();
+                    var pendingSupport = conversations.Count(c => c.NeedsStaffReply);
+                    PendingSupportCount = pendingSupport;
+                    HasPendingSupport = pendingSupport > 0;
+                }
+
+                // Check expired products
+                if (ShowProducts)
+                {
+                    var products = await api.GetProductsAsync();
+                    var expiredCount = products.Count(p => p.IsExpired);
+                    ExpiredProductsCount = expiredCount;
+                    HasExpiredProducts = expiredCount > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ CheckPending error: {ex.Message}");
             }
         }
 
@@ -184,6 +267,7 @@ namespace AvaloniaApplication1.ViewModels
         [RelayCommand]
         private void Logout()
         {
+            StopPendingPoll();
             ApiService.ClearSession();
             CurrentUser = null;
             IsLoggedIn = false;
@@ -192,6 +276,12 @@ namespace AvaloniaApplication1.ViewModels
             ShowSupport = false;
             ShowInventory = false;
             ShowStaffManagement = false;
+            PendingOrdersCount = 0;
+            PendingSupportCount = 0;
+            ExpiredProductsCount = 0;
+            HasPendingOrders = false;
+            HasPendingSupport = false;
+            HasExpiredProducts = false;
             
             var loginVm = new LoginViewModel();
             loginVm.LoginCompleted += OnLoginCompleted;

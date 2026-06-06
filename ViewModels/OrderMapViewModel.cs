@@ -1,9 +1,8 @@
 using System;
-using System.IO;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Avalonia.Media.Imaging;
 using AvaloniaApplication1.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,15 +10,13 @@ using CommunityToolkit.Mvvm.Input;
 namespace AvaloniaApplication1.ViewModels
 {
     /// <summary>
-    /// ViewModel для отображения карты с местоположением заказа
+    /// ViewModel для отображения местоположения заказа с геокодированием
     /// </summary>
     public partial class OrderMapViewModel : ViewModelBase
     {
         private Order? _order;
         private readonly HttpClient _httpClient;
-
-        [ObservableProperty]
-        private Bitmap? _mapImage;
+        private const string YandexApiKey = "0c6cefa6-303e-4c63-a6b6-fd9f3e427a5a";
 
         [ObservableProperty]
         private bool _isLoading;
@@ -42,6 +39,9 @@ namespace AvaloniaApplication1.ViewModels
         [ObservableProperty]
         private string _coordinatesText = "";
 
+        [ObservableProperty]
+        private string _geocodedAddress = "";
+
         public OrderMapViewModel()
         {
             _httpClient = new HttpClient();
@@ -50,21 +50,21 @@ namespace AvaloniaApplication1.ViewModels
 
         public ICommand OpenInBrowserCommand { get; }
 
+        public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+        public bool HasCoordinates => _order?.HasCoordinates ?? false;
+        public bool HasAddressDetails => !string.IsNullOrEmpty(Address) || !string.IsNullOrEmpty(Details);
+        public bool HasDetails => !string.IsNullOrEmpty(Details);
+        public bool HasGeocodedAddress => !string.IsNullOrEmpty(GeocodedAddress);
+
         /// <summary>
-        /// Установить заказ для отображения на карте
+        /// Установить заказ для отображения
         /// </summary>
         public void SetOrder(Order order)
         {
             _order = order;
             UpdateDisplayInfo();
-            _ = LoadMapAsync();
+            _ = LoadGeocodeAsync();
         }
-
-        public bool HasMapImage => MapImage != null;
-        public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
-        public bool HasCoordinates => _order?.HasCoordinates ?? false;
-        public bool HasAddressDetails => !string.IsNullOrEmpty(Address) || !string.IsNullOrEmpty(Details);
-        public bool HasDetails => !string.IsNullOrEmpty(Details);
 
         private void UpdateDisplayInfo()
         {
@@ -72,7 +72,6 @@ namespace AvaloniaApplication1.ViewModels
 
             Title = _order.DeliveryType == "delivery" ? "Адрес доставки" : "Местоположение";
 
-            // Set coordinates text
             if (_order.HasCoordinates)
             {
                 CoordinatesText = $"{_order.Latitude:F5}, {_order.Longitude:F5}";
@@ -82,7 +81,6 @@ namespace AvaloniaApplication1.ViewModels
                 CoordinatesText = "Нет координат";
             }
 
-            // Get address from delivery_details if available
             var details = _order.ParsedDeliveryDetails;
             if (details != null)
             {
@@ -90,7 +88,6 @@ namespace AvaloniaApplication1.ViewModels
                 Details = details.FormattedDetails;
                 HouseTypeText = details.IsApartment ? "Квартира" : "Частный дом";
 
-                // Use coordinates from delivery_details as fallback
                 if (!_order.HasCoordinates && details.Latitude.HasValue && details.Longitude.HasValue)
                 {
                     _order.Latitude = details.Latitude;
@@ -105,64 +102,62 @@ namespace AvaloniaApplication1.ViewModels
             }
         }
 
-        private async Task LoadMapAsync()
+        private async Task LoadGeocodeAsync()
         {
             if (_order == null || !_order.HasCoordinates)
             {
-                ErrorMessage = "Нет координат для отображения карты";
+                ErrorMessage = "Нет координат";
                 return;
             }
 
             IsLoading = true;
             ErrorMessage = null;
-            MapImage = null;
+            GeocodedAddress = "";
 
             try
             {
-                // Use static map from Yandex Maps
                 var lat = _order.Latitude.Value;
                 var lon = _order.Longitude.Value;
 
-                // Try Yandex Static Maps first
-                var yandexUrl = $"https://static-maps.yandex.ru/1.x/?ll={lon:F6},{lat:F6}&z=16&l=map&pt={lon:F6},{lat:F6},pm2rdl&size=600,400";
+                // Reverse geocode via Yandex Geocoder API (same endpoint as iOS app)
+                var url = $"https://geocode-maps.yandex.ru/1.x/?apikey={YandexApiKey}&geocode={lon:F6},{lat:F6}&format=json&lang=ru_RU&results=1&kind=house";
+                var response = await _httpClient.GetStringAsync(url);
 
-                try
+                using var doc = JsonDocument.Parse(response);
+                var root = doc.RootElement;
+                var featureMembers = root
+                    .GetProperty("response")
+                    .GetProperty("GeoObjectCollection")
+                    .GetProperty("featureMember");
+
+                foreach (var member in featureMembers.EnumerateArray())
                 {
-                    var imageBytes = await _httpClient.GetByteArrayAsync(yandexUrl);
-                    using var stream = new MemoryStream(imageBytes);
-                    MapImage = new Bitmap(stream);
-                    Console.WriteLine($"✅ Loaded Yandex map for order");
+                    var geoObject = member.GetProperty("GeoObject");
+                    var meta = geoObject.GetProperty("metaDataProperty").GetProperty("GeocoderMetaData");
+                    var text = meta.GetProperty("text").GetString();
+                    if (!string.IsNullOrEmpty(text))
+                    {
+                        GeocodedAddress = text;
+                        Console.WriteLine($"✅ Reverse geocoded address: {text}");
+                        break;
+                    }
                 }
-                catch (Exception yandexEx)
+
+                if (string.IsNullOrEmpty(GeocodedAddress))
                 {
-                    Console.WriteLine($"⚠️ Yandex maps failed: {yandexEx.Message}");
-
-                    // Fallback to OpenStreetMap static tiles
-                    var osmUrl = $"https://staticmap.openstreetmap.de/staticmap.php?center={lat:F6},{lon:F6}&zoom=16&size=600x400&markers={lat:F6},{lon:F6},red-pushpin";
-
-                    try
-                    {
-                        var imageBytes = await _httpClient.GetByteArrayAsync(osmUrl);
-                        using var stream = new MemoryStream(imageBytes);
-                        MapImage = new Bitmap(stream);
-                        Console.WriteLine($"✅ Loaded OSM map for order");
-                    }
-                    catch (Exception osmEx)
-                    {
-                        throw new Exception($"Failed to load map from both providers. Yandex: {yandexEx.Message}, OSM: {osmEx.Message}");
-                    }
+                    Console.WriteLine("⚠️ No geocoded address found");
                 }
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"Не удалось загрузить карту: {ex.Message}";
-                Console.WriteLine($"❌ Map loading error: {ex}");
+                ErrorMessage = $"Ошибка геокодирования: {ex.Message}";
+                Console.WriteLine($"❌ Geocode error: {ex}");
             }
             finally
             {
                 IsLoading = false;
-                OnPropertyChanged(nameof(HasMapImage));
                 OnPropertyChanged(nameof(HasError));
+                OnPropertyChanged(nameof(HasGeocodedAddress));
                 OnPropertyChanged(nameof(HasCoordinates));
             }
         }
@@ -174,8 +169,8 @@ namespace AvaloniaApplication1.ViewModels
             var lat = _order.Latitude.Value;
             var lon = _order.Longitude.Value;
 
-            // Open Yandex Maps
-            var url = $"https://yandex.ru/maps/?ll={lon:F6},{lat:F6}&z=16&pt={lon:F6},{lat:F6}";
+            // Open Yandex Maps with a specific point marker
+            var url = $"https://yandex.ru/maps/?whatshere[point]={lon:F6},{lat:F6}&whatshere[zoom]=16&z=16&ll={lon:F6},{lat:F6}";
 
             try
             {
@@ -192,11 +187,11 @@ namespace AvaloniaApplication1.ViewModels
         }
 
         /// <summary>
-        /// Refresh map image
+        /// Refresh geocoded address
         /// </summary>
         public void Refresh()
         {
-            _ = LoadMapAsync();
+            _ = LoadGeocodeAsync();
         }
     }
 }

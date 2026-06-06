@@ -32,10 +32,15 @@ namespace AvaloniaApplication1.ViewModels
         private ObservableCollection<Order> _orders = new();
 
         [ObservableProperty]
+        private Order? _selectedOrder;
+
+        [ObservableProperty]
         private bool _isLoading = false;
 
         [ObservableProperty]
         private string _errorMessage = string.Empty;
+
+        public bool HasSelectedOrder => SelectedOrder != null;
 
         public CustomerStatsViewModel(string userId, string customerName, string phone, ApiService apiService)
         {

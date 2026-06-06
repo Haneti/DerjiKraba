@@ -16,31 +16,56 @@
     <Grid RowDefinitions="Auto,*" Margin="20">
         <!-- Header - Matching mobile app style -->
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,0,20">
-            <TextBlock Text="📦 Управление товарами" 
-                      FontSize="24" 
-                      FontWeight="Bold"
-                      Foreground="{DynamicResource SystemBaseHighColor}"/>
+            <StackPanel Orientation="Horizontal"
+                        Spacing="10"
+                        VerticalAlignment="Center">
+                <Image Source="avares://AvaloniaApplication1/icons/items.png"
+                       Width="28"
+                       Height="28"/>
+                <TextBlock Text="Управление товарами" 
+                          FontSize="24" 
+                          FontWeight="Bold"
+                          Foreground="{DynamicResource SystemBaseHighColor}"/>
+            </StackPanel>
             
             <!-- Search Box -->
-            <TextBox Grid.Column="1" 
-                     Margin="20,0"
-                     Watermark="🔍 Поиск по названию или категории..."
-                     Text="{Binding SearchText}"
-                     VerticalContentAlignment="Center"/>
+            <Grid Grid.Column="1" Margin="20,0" ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+                <Image Grid.Column="0" Source="avares://AvaloniaApplication1/icons/loupe.png" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" 
+                         Watermark="Поиск по названию или категории..."
+                         Text="{Binding SearchText}"
+                         VerticalContentAlignment="Center"/>
+            </Grid>
             
             <Button Grid.Column="2" 
-                   Content="📦 Масс. ред." 
                    Command="{Binding StartBulkEditCommand}"
                    Margin="0,0,10,0"
                    Background="#F59E0B"
-                   Foreground="White"/>
+                   Foreground="White">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <Image Source="avares://AvaloniaApplication1/icons/items.png"
+                           Width="18"
+                           Height="18"/>
+                    <TextBlock Text="Масс. ред."
+                               VerticalAlignment="Center"
+                               Foreground="White"/>
+                </StackPanel>
+            </Button>
             
             <Button Grid.Column="3" 
-                   Content="+ Добавить товар" 
                    Command="{Binding StartCreateCommand}"
                    Classes="Primary"
                    Background="#3B82F6"
-                   Foreground="White"/>
+                   Foreground="White">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <Image Source="avares://AvaloniaApplication1/icons/plus.png"
+                           Width="18"
+                           Height="18"/>
+                    <TextBlock Text="Добавить товар"
+                               VerticalAlignment="Center"
+                               Foreground="White"/>
+                </StackPanel>
+            </Button>
         </Grid>
 
         <!-- Main Content - Clean white background -->
@@ -63,7 +88,7 @@
                             <DataTemplate>
                                 <Border Width="220" Height="360" Margin="8" 
                                         CornerRadius="8" BorderThickness="2"
-                                        BorderBrush="{Binding IsExpired, Converter={StaticResource BorderBrushConverter}, ConverterParameter=error}"
+                                        BorderBrush="{Binding AlertLevel, Converter={StaticResource BorderBrushConverter}}"
                                         Background="{DynamicResource SystemAltHighColor}" BoxShadow="0 2 4 #20000000"
                                         Cursor="Hand">
                                     <Border.Styles>
@@ -119,14 +144,23 @@
                                         
                                         <!-- Edit Button - FIXED at bottom of card -->
                                         <Button Grid.Row="3"
-                                                Content="✏️ Редактировать" 
                                                 Command="{Binding $parent[ItemsControl].DataContext.StartEditCommand}"
                                                 CommandParameter="{Binding}"
                                                 Classes="Primary"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Center"
                                                 Padding="8,6"
-                                                FontSize="12"/>
+                                                FontSize="12">
+                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <Image Source="avares://AvaloniaApplication1/icons/pancil.png"
+                                                       Width="14"
+                                                       Height="14"/>
+                                                <TextBlock Text="Редактировать"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="White"
+                                                           FontSize="12"/>
+                                            </StackPanel>
+                                        </Button>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -301,11 +335,15 @@
                    IsVisible="{Binding IsBulkEditing}">
                 <ScrollViewer>
                     <StackPanel Spacing="10">
-                        <TextBlock Text="📦 Массовое редактирование" 
-                                  FontSize="18" 
-                                  FontWeight="Bold"
-                                  HorizontalAlignment="Center"
-                                  Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                            <Image Source="avares://AvaloniaApplication1/icons/items.png"
+                                   Width="20"
+                                   Height="20"/>
+                            <TextBlock Text="Массовое редактирование" 
+                                      FontSize="18" 
+                                      FontWeight="Bold"
+                                      Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                        </StackPanel>
 
                         <TextBlock Text="Найдите товары и выберите нужные для редактирования. Установите новый срок годности и примените ко всем выбранным." 
                                   TextWrapping="Wrap"
@@ -320,11 +358,19 @@
                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
                                 <TextBox Watermark="Название или категория..." 
                                         Text="{Binding BulkCategory}"/>
-                                <Button Content="🔍 Найти товары" 
-                                       Command="{Binding SearchBulkEditCandidatesCommand}"
+                                <Button Command="{Binding SearchBulkEditCandidatesCommand}"
                                        Background="#3B82F6"
                                        Foreground="White"
-                                       HorizontalAlignment="Stretch"/>
+                                       HorizontalAlignment="Stretch">
+                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <Image Source="avares://AvaloniaApplication1/icons/loupe.png"
+                                               Width="18"
+                                               Height="18"/>
+                                        <TextBlock Text="Найти товары"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="White"/>
+                                    </StackPanel>
+                                </Button>
                             </StackPanel>
                         </Border>
                         
@@ -411,7 +457,10 @@
                    CornerRadius="5"
                    IsVisible="{Binding !HasProducts}">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-                    <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center"/>
+                    <Image Source="avares://AvaloniaApplication1/icons/items.png"
+                           Width="64"
+                           Height="64"
+                           HorizontalAlignment="Center"/>
                     <TextBlock Text="Нет товаров" FontSize="18" HorizontalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}"/>
                     <TextBlock Text="Нажмите кнопку «Добавить товар» чтобы создать первый товар" 
                               TextWrapping="Wrap"

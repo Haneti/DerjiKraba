@@ -460,7 +460,8 @@ namespace AvaloniaApplication1.ViewModels
         public decimal DifferenceValue { get; set; }
         public AdjustmentType AdjustmentType { get; set; }
         
-        public string DisplayDifference => $"{(Difference >= 0 ? "+" : "")}{Difference:F3} {UnitType}";
+        public string UnitDisplay => UnitType == "piece" ? "шт" : "кг";
+        public string DisplayDifference => $"{(Difference >= 0 ? "+" : "")}{Difference:F3} {UnitDisplay}";
         public string DisplayValue => $"{DifferenceValue:F2} ₽";
         public string DisplayType => AdjustmentType switch
         {

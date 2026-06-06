@@ -38,6 +38,9 @@ namespace AvaloniaApplication1.ViewModels
         [ObservableProperty]
         private ViewModelBase? _customerStatsViewModel;
 
+        [ObservableProperty]
+        private OrderMapViewModel? _orderMapViewModel;
+
         public OrdersViewModel(User currentUser)
         {
             _currentUser = currentUser;
@@ -107,6 +110,16 @@ namespace AvaloniaApplication1.ViewModels
         partial void OnSelectedOrderChanged(Order? value)
         {
             ErrorMessage = string.Empty;
+            if (value != null)
+            {
+                var vm = new OrderMapViewModel();
+                vm.SetOrder(value);
+                OrderMapViewModel = vm;
+            }
+            else
+            {
+                OrderMapViewModel = null;
+            }
         }
 
         [RelayCommand]

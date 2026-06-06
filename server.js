@@ -45,6 +45,24 @@ const fs = require('fs');
 
 const app = express();
 
+const stripApiPrefix = (value) => {
+  if (!value) return value;
+  if (value === '/api' || value === '/api/') {
+    return '/';
+  }
+  if (value.startsWith('/api/')) {
+    return value.slice(4) || '/';
+  }
+  return value;
+};
+
+// Нормализуем URL один раз, чтобы все middleware и роуты работали без префикса /api
+app.use((req, _res, next) => {
+  req.originalUrlWithApi = req.url;
+  req.url = stripApiPrefix(req.url);
+  next();
+});
+
 // ========== SECURITY CONFIGURATION ==========
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const MOBILE_API_KEY = process.env.MOBILE_API_KEY || 'be5e23bdd69baeeb2e7c97948f35faa5fae7b924613e52ece589bc24821e1051'; // Change in production!
@@ -92,6 +110,12 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use('/images', express.static('C:/DerjiKraba-Api/public/images'));
 
+app.use((req, _res, next) => {
+  const bodySummary = req.body && Object.keys(req.body).length ? req.body : '';
+  console.log(new Date().toISOString(), req.method, req.originalUrlWithApi ?? req.url, '->', req.url, bodySummary);
+  next();
+});
+
 // Rate limiting middleware
 function rateLimit(req, res, next) {
   const ip = req.ip || req.connection.remoteAddress || 'unknown';
@@ -117,8 +141,10 @@ function rateLimit(req, res, next) {
 
 // Block scrapers/bots for public endpoints
 function antiScrape(req, res, next) {
+  const path = req.path;
+
   // Only apply to public GET endpoints
-  if (req.method !== 'GET' || req.path !== '/products') {
+  if (req.method !== 'GET' || path !== '/products') {
     return next();
   }
   
@@ -154,17 +180,20 @@ function antiScrape(req, res, next) {
 
 // JWT + Session Key validation middleware
 function requireAuth(req, res, next) {
+  const path = req.path;
+
   // Skip for GET requests to public endpoints
   if (req.method === 'GET' && (
-    req.path === '/products' || 
-    req.path.startsWith('/images/') ||
-    req.path === '/'
+    path === '/products' || 
+    path === '/health' ||
+    path.startsWith('/images/') ||
+    path === '/'
   )) {
     return next();
   }
   
   // Skip auth endpoints (they handle their own auth)
-  if (req.path.startsWith('/auth/')) {
+  if (path.startsWith('/auth/')) {
     return next();
   }
   
@@ -248,20 +277,179 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // Лимит 5MB
 });
 
-// Глобальный лог каждого запроса
-app.use((req, _res, next) => {
-  req.originalUrlWithApi = req.url;          // если нужен для логов
-  if (req.url === '/api' || req.url === '/api/') {
-    req.url = '/';
-  } else if (req.url.startsWith('/api/')) {
-    req.url = req.url.slice(4);              // "/api/products" → "/products"
-  }
-  next();
-});
-
-
 const pool = mysql.createPool((process.env.DB_URL || 'mysql://krab:S3cure!Pass@127.0.0.1:3306/derjikrab') + '?charset=utf8mb4');
 const db = pool;
+
+function createHttpError(status, message, details) {
+  const err = new Error(message || 'Error');
+  err.status = status;
+  if (details !== undefined) {
+    err.details = details;
+  }
+  return err;
+}
+
+async function createOrderInternal({ userId, deliveryType, deliveryAddress, deliveryDetails, notes, rawItems }) {
+  if (!userId) {
+    throw createHttpError(400, 'user_id is required');
+  }
+  if (!Array.isArray(rawItems) || rawItems.length === 0) {
+    throw createHttpError(400, 'items are required');
+  }
+
+  const allowedDeliveryTypes = new Set(['delivery', 'pickup']);
+  const normalizedType = String(deliveryType || '').toLowerCase();
+  const finalDeliveryType = allowedDeliveryTypes.has(normalizedType) ? normalizedType : 'delivery';
+
+  let detailsObj = {};
+  if (deliveryDetails) {
+    try {
+      detailsObj = JSON.parse(deliveryDetails);
+    } catch (e) {
+      console.warn('Failed to parse delivery_details:', e);
+      detailsObj = {};
+    }
+  }
+  if (typeof detailsObj !== 'object' || detailsObj === null) {
+    detailsObj = {};
+  }
+  detailsObj.type = finalDeliveryType;
+
+  const items = rawItems.map((raw, index) => {
+    const productId = String(raw.product_id || '').trim();
+    const quantity = Number(raw.quantity);
+    const price = Number(raw.price_per_kg);
+
+    if (!productId) {
+      throw createHttpError(400, `product_id is required for item #${index + 1}`);
+    }
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      throw createHttpError(400, `quantity must be positive for item #${index + 1}`);
+    }
+
+    const normalizedPrice = Number.isFinite(price) && price >= 0 ? price : 0;
+    return {
+      productId,
+      quantity,
+      price: normalizedPrice
+    };
+  });
+
+  const total = items.reduce((sum, it) => sum + it.quantity * it.price, 0);
+  const conn = await pool.getConnection();
+
+  try {
+    await conn.beginTransaction();
+    const [[{ uuid: orderId }]] = await conn.query(`SELECT UUID() AS uuid`);
+
+    await decrementStockForItems(conn, items);
+
+    const isPickup = finalDeliveryType === 'pickup';
+    const houseType = isPickup ? null : (detailsObj.house_type || 'apartment');
+    const entrance = isPickup ? null : (detailsObj.entrance || null);
+    const floor = isPickup ? null : (detailsObj.floor || null);
+    const apartment = isPickup ? null : (detailsObj.apartment || null);
+    const intercom = isPickup ? null : (detailsObj.intercom || null);
+    const intercomBroken = isPickup ? false : Boolean(detailsObj.intercom_broken);
+    const latitude = isPickup ? null : (detailsObj.latitude ?? null);
+    const longitude = isPickup ? null : (detailsObj.longitude ?? null);
+    const storedDeliveryAddress = isPickup
+      ? (deliveryAddress ?? detailsObj.address ?? 'Самовывоз')
+      : (deliveryAddress ?? null);
+
+    if (isPickup && !detailsObj.address) {
+      detailsObj.address = storedDeliveryAddress;
+    }
+
+    const deliveryDetailsJson = JSON.stringify(detailsObj);
+
+    await conn.query(`
+      INSERT INTO orders (
+        id, user_id, order_date, status,
+        delivery_type, delivery_address, delivery_details,
+        house_type, entrance, floor, apartment, intercom, intercom_broken,
+        latitude, longitude,
+        total_amount, notes
+      )
+      VALUES (?, ?, NOW(), 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      orderId,
+      userId,
+      finalDeliveryType,
+      storedDeliveryAddress,
+      deliveryDetailsJson,
+      houseType,
+      entrance,
+      floor,
+      apartment,
+      intercom,
+      intercomBroken,
+      latitude,
+      longitude,
+      total,
+      notes ?? null
+    ]);
+
+    for (const item of items) {
+      const [[{ uuid: itemId }]] = await conn.query(`SELECT UUID() AS uuid`);
+      console.log('Inserting order_item:', { itemId, orderId, productId: item.productId, qty: item.quantity, price: item.price });
+      await conn.query(`
+        INSERT INTO order_items (id, order_id, product_id, quantity, price_per_kg)
+        VALUES (?, ?, ?, ?, ?)
+      `, [itemId, orderId, item.productId, item.quantity, item.price]);
+    }
+
+    await conn.commit();
+    return { orderId };
+  } catch (err) {
+    await conn.rollback().catch(() => {});
+    throw err;
+  } finally {
+    conn.release();
+  }
+}
+
+async function decrementStockForItems(conn, items) {
+  for (const item of items) {
+    const [products] = await conn.query('SELECT name, quantity_in_stock FROM products WHERE id = ? FOR UPDATE', [item.productId]);
+    if (!products.length) {
+      throw createHttpError(400, 'Товар не найден', { productId: item.productId });
+    }
+
+    const product = products[0];
+    const available = Number(product.quantity_in_stock ?? 0);
+    if (available < item.quantity) {
+      throw createHttpError(409, `Недостаточно товара "${product.name}"`, {
+        productId: item.productId,
+        available,
+        requested: item.quantity
+      });
+    }
+
+    await conn.query('UPDATE products SET quantity_in_stock = quantity_in_stock - ? WHERE id = ?', [item.quantity, item.productId]);
+  }
+}
+
+async function creditStockForItems(conn, items) {
+  for (const item of items) {
+    await conn.query('UPDATE products SET quantity_in_stock = quantity_in_stock + ? WHERE id = ?', [item.quantity, item.productId]);
+  }
+}
+
+function handleOrderError(res, err, logPrefix) {
+  const status = err?.status || 500;
+  if (status >= 500) {
+    console.error(logPrefix, err);
+  } else {
+    console.warn(logPrefix, err.message ?? err);
+  }
+
+  if (err?.details) {
+    res.status(status).json({ error: err.message || 'Ошибка заказа', details: err.details });
+  } else {
+    res.status(status).json({ error: err?.message || 'Ошибка заказа' });
+  }
+}
 // Health
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
@@ -479,85 +667,21 @@ app.post('/auth/login', async (req, res) => {
   res.json(mapUser(rows[0]));
 });
 
-app.post('/api/orders', async (req, res) => {
-  const { 
-    user_id, 
-    delivery_type, 
-    delivery_address, 
-    delivery_details, // JSON string
-    notes, 
-    items 
-  } = req.body || {};
-  
-  if (!user_id || !Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ error: 'Invalid payload: user_id and items required' });
-  }
-  
-  // Парсим JSON с деталями
-  let details = {};
+app.post('/orders', async (req, res) => {
   try {
-    if (delivery_details) {
-      details = JSON.parse(delivery_details);
-    }
-  } catch (e) {
-    console.warn('Failed to parse delivery_details:', e);
-  }
-  
-  const total = items.reduce((s, i) => s + Number(i.quantity || 0) * Number(i.price_per_kg || 0), 0);
-  const conn = await pool.getConnection();
-  
-  try {
-    await conn.beginTransaction();
-    const [[{ uuid: orderId }]] = await conn.query(`SELECT UUID() AS uuid`);
-    
-    await conn.query(`
-      INSERT INTO orders (
-        id, user_id, order_date, status, 
-        delivery_type, delivery_address, delivery_details,
-        house_type, entrance, floor, apartment, intercom, intercom_broken,
-        latitude, longitude,
-        total_amount, notes
-      )
-      VALUES (?, ?, NOW(), 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      orderId,
-      user_id,
-      delivery_type || 'delivery',
-      delivery_address ?? null,
-      delivery_details ?? null,
-      details.house_type || 'apartment',
-      details.entrance || null,
-      details.floor || null,
-      details.apartment || null,
-      details.intercom || null,
-      details.intercom_broken || false,
-      details.latitude || null,
-      details.longitude || null,
-      total,
-      notes || null
-    ]);
-    
-    for (const it of items) {
-      const [[{ uuid: itemId }]] = await conn.query(`SELECT UUID() AS uuid`);
-      const productId = it.product_id || null;
-      const qty = it.quantity || 0;
-      const price = it.price_per_kg || 0;
-      console.log('Inserting order_item:', { itemId, orderId, productId, qty, price, it });
-      await conn.query(`
-        INSERT INTO order_items (id, order_id, product_id, quantity, price_per_kg)
-        VALUES (?, ?, ?, ?, ?)
-      `, [itemId, orderId, productId, qty, price]);
-    }
-    
-    await conn.commit();
+    const { orderId } = await createOrderInternal({
+      userId: req.body?.user_id,
+      deliveryType: req.body?.delivery_type,
+      deliveryAddress: req.body?.delivery_address,
+      deliveryDetails: req.body?.delivery_details,
+      notes: req.body?.notes,
+      rawItems: req.body?.items
+    });
+
     console.log('Order created:', orderId);
     res.json({ ok: true, order_id: orderId });
-  } catch (e) {
-    await conn.rollback();
-    console.error('POST /api/orders error:', e);
-    res.status(500).json({ error: 'DB error', detail: String(e) });
-  } finally {
-    conn.release();
+  } catch (err) {
+    handleOrderError(res, err, 'POST /orders error');
   }
 });
 
@@ -843,86 +967,22 @@ app.delete('/products/:id', async (req, res) => {
   }
 });
 
-// Заказ (устаревший endpoint - используйте /api/orders для новых полей)
-app.post('/orders', async (req, res) => {
-  const { 
-    user_id, 
-    delivery_type, 
-    delivery_address, 
-    delivery_details, // JSON string с расширенной информацией
-    notes, 
-    items 
-  } = req.body || {};
-  
-  if (!user_id || !Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ error: 'Invalid payload' });
-  }
-  
-  const total = items.reduce((s, i) => s + i.quantity * i.price_per_kg, 0);
-
-  // Парсим JSON с деталями (если есть)
-  let details = {};
+// Заказ (устаревший endpoint - используйте /orders для новых полей)
+app.post('/orders/legacy', async (req, res) => {
   try {
-    if (delivery_details) {
-      details = JSON.parse(delivery_details);
-    }
-  } catch (e) {
-    console.warn('Failed to parse delivery_details:', e);
-  }
+    const { orderId } = await createOrderInternal({
+      userId: req.body?.user_id,
+      deliveryType: req.body?.delivery_type,
+      deliveryAddress: req.body?.delivery_address,
+      deliveryDetails: req.body?.delivery_details,
+      notes: req.body?.notes,
+      rawItems: req.body?.items
+    });
 
-  const conn = await pool.getConnection();
-  try {
-    await conn.beginTransaction();
-    const [[{ uuid: orderId }]] = await conn.query(`SELECT UUID() AS uuid`);
-    
-    console.log('Creating order:', { orderId, user_id, delivery_type, items: items.length });
-    
-    await conn.query(`
-      INSERT INTO orders (
-        id, user_id, order_date, status, 
-        delivery_type, delivery_address, delivery_details,
-        house_type, entrance, floor, apartment, intercom, intercom_broken,
-        latitude, longitude,
-        total_amount, notes
-      )
-      VALUES (?, ?, NOW(), 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      orderId,
-      user_id,
-      delivery_type || 'delivery',
-      delivery_address || null,
-      delivery_details || null,
-      details.house_type || 'apartment',
-      details.entrance || null,
-      details.floor || null,
-      details.apartment || null,
-      details.intercom || null,
-      details.intercom_broken || false,
-      details.latitude || null,
-      details.longitude || null,
-      total,
-      notes || null
-    ]);
-
-    for (const it of items) {
-      const [[{ uuid: itemId }]] = await conn.query(`SELECT UUID() AS uuid`);
-      const productId = it.product_id || null;
-      const qty = it.quantity || 0;
-      const price = it.price_per_kg || 0;
-      console.log('Inserting item:', { itemId, orderId, productId, qty, price });
-      await conn.query(`
-        INSERT INTO order_items (id, order_id, product_id, quantity, price_per_kg)
-        VALUES (?, ?, ?, ?, ?)
-      `, [itemId, orderId, productId, qty, price]);
-    }
-
-    await conn.commit();
+    console.log('Legacy order created:', orderId);
     res.json({ ok: true, order_id: orderId });
-  } catch (e) {
-    await conn.rollback();
-    res.status(500).json({ error: 'DB error', detail: String(e) });
-  } finally {
-    conn.release();
+  } catch (err) {
+    handleOrderError(res, err, 'POST /orders/legacy error');
   }
 });
 
@@ -1152,10 +1212,45 @@ app.get('/orders/user/:userId', async (req, res) => {
 app.patch('/orders/:id', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body || {};
-  const allowed = new Set(['pending','processing','ready','delivering','completed','cancelled']);
-  if (!allowed.has(status)) return res.status(400).json({ error: 'invalid status' });
-  await pool.query(`UPDATE orders SET status = ? WHERE id = ?`, [status, id]);
-  res.json({ ok: true });
+  const allowed = new Set(['pending', 'processing', 'ready', 'delivering', 'completed', 'cancelled']);
+  if (!allowed.has(status)) {
+    return res.status(400).json({ error: 'invalid status' });
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [orders] = await conn.query('SELECT status FROM orders WHERE id = ? FOR UPDATE', [id]);
+    if (!orders.length) {
+      await conn.rollback();
+      return res.status(404).json({ error: 'order not found' });
+    }
+
+    const currentStatus = orders[0].status;
+    if (currentStatus === status) {
+      await conn.rollback();
+      return res.json({ ok: true, unchanged: true });
+    }
+
+    const [items] = await conn.query('SELECT product_id AS productId, quantity, price_per_kg AS pricePerKg FROM order_items WHERE order_id = ?', [id]);
+
+    if (status === 'cancelled' && currentStatus !== 'cancelled') {
+      await creditStockForItems(conn, items.map(it => ({ productId: it.productId, quantity: Number(it.quantity) })));
+    }
+
+    if (currentStatus === 'cancelled' && status !== 'cancelled') {
+      await decrementStockForItems(conn, items.map(it => ({ productId: it.productId, quantity: Number(it.quantity), price: Number(it.pricePerKg ?? 0) })));
+    }
+
+    await conn.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
+    await conn.commit();
+    res.json({ ok: true });
+  } catch (err) {
+    await conn.rollback().catch(() => {});
+    handleOrderError(res, err, 'PATCH /orders/:id error');
+  } finally {
+    conn.release();
+  }
 });
 // === Support chat (клиент ↔ сотрудники) ===
 function normalizePhone(value) {
@@ -1496,11 +1591,33 @@ bot.onText(/\/start (.+)/, async (msg, match) => {
 app.post("/auth/request-code", async (req, res) => {
   const { phone } = req.body;
 
-  const [users] = await pool.query("SELECT * FROM users WHERE phone = ?", [phone]);
-  if (users.length === 0) return res.status(404).json({ error: "User not found" });
+  if (!phone) {
+    return res.status(400).json({ error: "Phone is required" });
+  }
 
-  const user = users[0];
-  if (!user.telegram_chat_id) {
+  const normalizedPhone = normalizePhone(phone) ?? String(phone ?? "").trim();
+  const candidates = Array.from(new Set([normalizedPhone, String(phone ?? "").trim()])).filter(Boolean);
+
+  let user = null;
+  for (const candidate of candidates) {
+    const [rows] = await pool.query(
+      `SELECT id, phone, telegram_chat_id AS telegramChatId
+       FROM users
+       WHERE phone = ?
+       LIMIT 1`,
+      [candidate]
+    );
+    if (rows.length) {
+      user = rows[0];
+      break;
+    }
+  }
+
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  if (!user.telegramChatId) {
     return res.status(400).json({ error: "Telegram not linked" });
   }
 
@@ -1512,7 +1629,12 @@ app.post("/auth/request-code", async (req, res) => {
     [code, expires, user.id]
   );
 
-  await bot.sendMessage(user.telegram_chat_id, `🔐 Ваш код входа: ${code}\nДействителен 5 минут.`);
+  try {
+    await bot.sendMessage(user.telegramChatId, `🔐 Ваш код входа: ${code}\nДействителен 5 минут.`);
+  } catch (err) {
+    console.error("❌ Failed to send Telegram code:", err?.message ?? err);
+    return res.status(502).json({ error: "Failed to deliver code to Telegram" });
+  }
 
   res.json({ ok: true });
 });
@@ -1520,38 +1642,46 @@ app.post("/auth/request-code", async (req, res) => {
 app.post("/auth/verify-code", async (req, res) => {
   const { phone, code } = req.body;
 
-  const [rows] = await pool.query(
-    "SELECT * FROM users WHERE phone = ? AND login_code = ? AND login_code_expires > NOW()",
-    [phone, code]
-  );
+  if (!phone || !code) {
+    return res.status(400).json({ error: "Phone and code are required" });
+  }
 
-  if (rows.length === 0) {
+  const normalizedPhone = normalizePhone(phone) ?? String(phone ?? "").trim();
+  const candidates = Array.from(new Set([normalizedPhone, String(phone ?? "").trim()])).filter(Boolean);
+
+  let userRow = null;
+  for (const candidate of candidates) {
+    const [rows] = await pool.query(
+      `SELECT id, phone, first_name AS firstName, last_name AS lastName, middle_name AS middleName,
+              role, is_verified AS isVerified, telegram_chat_id AS telegramChatId
+       FROM users
+       WHERE phone = ? AND login_code = ? AND login_code_expires > NOW()
+       LIMIT 1`,
+      [candidate, code]
+    );
+    if (rows.length) {
+      userRow = rows[0];
+      break;
+    }
+  }
+
+  if (!userRow) {
     return res.status(400).json({ error: "Invalid or expired code" });
   }
 
-  const user = rows[0];
-
   await pool.query(
     "UPDATE users SET login_code = NULL, login_code_expires = NULL WHERE id = ?",
-    [user.id]
+    [userRow.id]
   );
 
   // Generate JWT token and session key
-  const { token, sessionKey } = generateTokens(user);
+  const { token, sessionKey } = generateTokens(userRow);
   
-  // Return user data + tokens
+  // Return user data + tokens using camelCase payload
   res.json({
-    user: {
-      id: user.id,
-      phone: user.phone,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      middle_name: user.middle_name,
-      role: user.role,
-      is_verified: user.is_verified
-    },
-    token: token,
-    sessionKey: sessionKey
+    user: mapUser(userRow),
+    token,
+    sessionKey
   });
 });
 

@@ -107,6 +107,36 @@ namespace AvaloniaApplication1.ViewModels
             await LoadMessagesAsync(SelectedConversation);
         }
 
+        [RelayCommand]
+        private async Task MarkReadAsync()
+        {
+            if (SelectedConversation == null) return;
+
+            IsLoading = true;
+            try
+            {
+                var success = await _apiService.MarkConversationReadAsync(SelectedConversation.ClientPhone);
+                if (success)
+                {
+                    SelectedConversation.NeedsStaffReply = false;
+                    OnPropertyChanged(nameof(SelectedConversation));
+                    await LoadConversationsAsync();
+                }
+                else
+                {
+                    ErrorMessage = "Не удалось отметить чат прочитанным";
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Ошибка: {ex.Message}";
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
         private async Task LoadMessagesAsync(SupportConversation conversation)
         {
             Console.WriteLine($"📱 Client Phone: {conversation.ClientPhone}");

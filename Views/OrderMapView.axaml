@@ -44,59 +44,59 @@
                 </Grid>
             </Border>
 
-            <!-- Map Image -->
-            <Grid Grid.Row="1" 
+            <!-- Coordinates & Geocoded Address -->
+            <Grid Grid.Row="1"
                  Background="{DynamicResource SystemControlBackgroundAltMediumBrush}"
-                 Height="250">
-                <Image Source="{Binding MapImage}" 
-                      Stretch="UniformToFill"
-                      IsVisible="{Binding HasMapImage}"/>
-                
-                <!-- Coordinates Overlay -->
-                <Border VerticalAlignment="Bottom" 
-                       HorizontalAlignment="Left"
-                       Background="#80000000"
-                       CornerRadius="4"
-                       Padding="8,4"
-                       Margin="8">
-                    <TextBlock Text="{Binding CoordinatesText}" 
-                              Foreground="White"
-                              FontSize="11"/>
-                </Border>
+                 MinHeight="120">
+                <StackPanel Spacing="10" Margin="12" IsVisible="{Binding HasCoordinates}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="M12,2C8.13,2 5,5.13 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9C19,5.13 15.87,2 12,2M12,11.5C10.62,11.5 9.5,10.38 9.5,9C9.5,7.62 10.62,6.5 12,6.5C13.38,6.5 14.5,7.62 14.5,9C14.5,10.38 13.38,11.5 12,11.5Z"
+                                 Width="20" Height="20"
+                                 Foreground="#DC2626"
+                                 VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding CoordinatesText}"
+                                  FontWeight="SemiBold"
+                                  FontSize="13"
+                                  VerticalAlignment="Center"
+                                  Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                    </StackPanel>
 
-                <!-- Loading -->
-                <StackPanel IsVisible="{Binding IsLoading}"
-                           HorizontalAlignment="Center" 
-                           VerticalAlignment="Center">
-                    <ProgressBar IsIndeterminate="True" Width="60"/>
-                    <TextBlock Text="Загрузка карты..." 
-                              Margin="0,8,0,0"
-                              FontSize="12"/>
-                </StackPanel>
+                    <StackPanel IsVisible="{Binding HasGeocodedAddress}" Spacing="4">
+                        <TextBlock Text="Определённый адрес:"
+                                  FontSize="11"
+                                  Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                        <TextBlock Text="{Binding GeocodedAddress}"
+                                  FontSize="13"
+                                  TextWrapping="Wrap"
+                                  Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                    </StackPanel>
 
-                <!-- Error -->
-                <StackPanel IsVisible="{Binding HasError}"
-                           HorizontalAlignment="Center" 
-                           VerticalAlignment="Center"
-                           Spacing="8">
-                    <PathIcon Data="M13,13H11V7H13M13,17H11V15H13M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2Z"
-                             Width="40" Height="40"
-                             Foreground="Orange"/>
-                    <TextBlock Text="{Binding ErrorMessage}"
-                              TextWrapping="Wrap"
-                              TextAlignment="Center"
-                              MaxWidth="200"/>
+                    <StackPanel IsVisible="{Binding IsLoading}" Orientation="Horizontal" Spacing="8">
+                        <ProgressBar IsIndeterminate="True" Width="80" Height="4"/>
+                        <TextBlock Text="Определение адреса..."
+                                  FontSize="11"
+                                  VerticalAlignment="Center"
+                                  Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+
+                    <StackPanel IsVisible="{Binding HasError}" Spacing="4">
+                        <TextBlock Text="{Binding ErrorMessage}"
+                                  FontSize="11"
+                                  TextWrapping="Wrap"
+                                  Foreground="Orange"/>
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- No Coordinates -->
                 <StackPanel IsVisible="{Binding !HasCoordinates}"
-                           HorizontalAlignment="Center" 
+                           HorizontalAlignment="Center"
                            VerticalAlignment="Center"
-                           Spacing="8">
+                           Spacing="8"
+                           Margin="12">
                     <PathIcon Data="M12,2C8.13,2 5,5.13 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9C19,5.13 15.87,2 12,2M12,11.5C10.62,11.5 9.5,10.38 9.5,9C9.5,7.62 10.62,6.5 12,6.5C13.38,6.5 14.5,7.62 14.5,9C14.5,10.38 13.38,11.5 12,11.5Z"
-                             Width="40" Height="40"
+                             Width="32" Height="32"
                              Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-                    <TextBlock Text="Нет координат для отображения"
+                    <TextBlock Text="Нет координат"
                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
                 </StackPanel>
             </Grid>

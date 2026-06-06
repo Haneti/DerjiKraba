@@ -16,23 +16,31 @@
                Background="{DynamicResource SystemAltHighColor}">
             <Grid RowDefinitions="Auto,*">
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                    <TextBlock Grid.Column="0"
-                              Text="💬 Чат поддержки" 
-                              FontSize="20" 
-                              FontWeight="Bold"
-                              Foreground="{DynamicResource SystemBaseHighColor}"
-                              Margin="15"
-                              VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                Margin="15"
+                                VerticalAlignment="Center">
+                        <Image Source="avares://AvaloniaApplication1/icons/SupportChat.png"
+                               Width="24"
+                               Height="24"/>
+                        <TextBlock Text="Чат поддержки" 
+                                   FontSize="20" 
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource SystemBaseHighColor}"/>
+                    </StackPanel>
                     
                     <Button Grid.Column="1"
-                           Content="🔄" 
                            Command="{Binding LoadConversationsCommand}"
                            Margin="10"
                            Background="Transparent"
                            Foreground="{DynamicResource SystemAccentColor}"
-                           FontSize="18"
                            Padding="5"
-                           ToolTip.Tip="Обновить список"/>
+                           ToolTip.Tip="Обновить список">
+                        <Image Source="avares://AvaloniaApplication1/icons/Refrash.png"
+                               Width="18"
+                               Height="18"/>
+                    </Button>
                 </Grid>
 
                 <ListBox Grid.Row="1" Grid.ColumnSpan="2"
@@ -128,15 +136,32 @@
                                       Foreground="{DynamicResource SystemBaseMediumColor}"
                                       FontSize="12"/>
                         </StackPanel>
-                        <Button Grid.Column="1" 
-                               Content="🔄" 
-                               Command="{Binding RefreshMessagesCommand}"
-                               VerticalAlignment="Center"
-                               Background="Transparent"
-                               Foreground="{DynamicResource SystemAccentColor}"
-                               FontSize="20"
-                               Padding="8"
-                               ToolTip.Tip="Обновить сообщения"/>
+                        <StackPanel Grid.Column="1" 
+                                    Orientation="Horizontal" 
+                                    Spacing="8"
+                                    VerticalAlignment="Center">
+                            <Button Command="{Binding MarkReadCommand}"
+                                    IsVisible="{Binding SelectedConversation.NeedsStaffReply}"
+                                    Background="#10B981"
+                                    Foreground="White"
+                                    Padding="8,4"
+                                    CornerRadius="5"
+                                    ToolTip.Tip="Отметить прочитанным">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                    <TextBlock Text="✓" FontSize="14" Foreground="White"/>
+                                    <TextBlock Text="Прочитано" FontSize="12" Foreground="White" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding RefreshMessagesCommand}"
+                                   Background="Transparent"
+                                   Foreground="{DynamicResource SystemAccentColor}"
+                                   Padding="8"
+                                   ToolTip.Tip="Обновить сообщения">
+                                <Image Source="avares://AvaloniaApplication1/icons/Refrash.png"
+                                       Width="18"
+                                       Height="18"/>
+                            </Button>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
@@ -249,13 +274,15 @@
                                     Margin="0,0,10,0"
                                     KeyDown="OnMessageTextBoxKeyDown"/>
                             <Button Grid.Column="2" 
-                                   Content="➤" 
                                    Command="{Binding SendMessageCommand}"
                                    Classes="Primary"
-                                   FontSize="16"
                                    Padding="12,8"
                                    IsEnabled="{Binding IsNotLoading}"
-                                   ToolTip.Tip="Отправить сообщение"/>
+                                   ToolTip.Tip="Отправить сообщение">
+                                <Image Source="avares://AvaloniaApplication1/icons/sent.png"
+                                       Width="18"
+                                       Height="18"/>
+                            </Button>
                         </Grid>
                     </Grid>
                 </Border>
@@ -268,7 +295,10 @@
                CornerRadius="5"
                IsVisible="{Binding HasNoSelectedConversation}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-                <TextBlock Text="💬" FontSize="48" HorizontalAlignment="Center"/>
+                <Image Source="avares://AvaloniaApplication1/icons/SupportChat.png"
+                       Width="64"
+                       Height="64"
+                       HorizontalAlignment="Center"/>
                 <TextBlock Text="Выберите чат" FontSize="18" HorizontalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}"/>
                 <TextBlock Text="Выберите диалог из списка слева" 
                           TextWrapping="Wrap"

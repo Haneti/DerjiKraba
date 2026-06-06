@@ -9,10 +9,15 @@
     <Grid RowDefinitions="Auto,*,Auto" Margin="20">
         <!-- Header -->
         <StackPanel Grid.Row="0" Spacing="15" Margin="0,0,0,20">
-            <TextBlock Text="👥 Управление сотрудниками" 
-                      FontSize="24" 
-                      FontWeight="Bold"
-                      Foreground="{DynamicResource SystemBaseHighColor}"/>
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <Image Source="avares://AvaloniaApplication1/icons/Employees.png"
+                       Width="28"
+                       Height="28"/>
+                <TextBlock Text="Управление сотрудниками" 
+                          FontSize="24" 
+                          FontWeight="Bold"
+                          Foreground="{DynamicResource SystemBaseHighColor}"/>
+            </StackPanel>
             
             <TextBlock Text="Создание и управление аккаунтами сотрудников" 
                       FontSize="14"
@@ -23,10 +28,16 @@
         <ScrollViewer Grid.Row="1">
             <StackPanel Spacing="20">
                 <!-- Create New Staff Button -->
-                <Button Content="➕ Создать нового сотрудника" 
-                       Command="{Binding ToggleCreateModeCommand}"
+                <Button Command="{Binding ToggleCreateModeCommand}"
                        HorizontalAlignment="Left"
-                       Classes="Primary"/>
+                       Classes="Primary">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Image Source="avares://AvaloniaApplication1/icons/plus.png"
+                               Width="16"
+                               Height="16"/>
+                        <TextBlock Text="Создать нового сотрудника" Foreground="White"/>
+                    </StackPanel>
+                </Button>
 
                 <!-- Cancel Button (visible when creating) -->
                 <Button Content="❌ Отмена создания" 
@@ -105,13 +116,24 @@
                                 Margin="0,0,0,10"/>
                         
                         <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="📋 Все пользователи" 
-                                      FontSize="18" 
-                                      FontWeight="Bold"
-                                      Foreground="{DynamicResource SystemBaseHighColor}"/>
-                            <Button Content="🔄 Обновить" 
-                                   Command="{Binding RefreshUsersCommand}"
-                                   HorizontalAlignment="Left"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Image Source="avares://AvaloniaApplication1/icons/Employees.png"
+                                       Width="20"
+                                       Height="20"/>
+                                <TextBlock Text="Все пользователи" 
+                                          FontSize="18" 
+                                          FontWeight="Bold"
+                                          Foreground="{DynamicResource SystemBaseHighColor}"/>
+                            </StackPanel>
+                            <Button Command="{Binding RefreshUsersCommand}"
+                                   HorizontalAlignment="Left">
+                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <Image Source="avares://AvaloniaApplication1/icons/Refrash.png"
+                                           Width="16"
+                                           Height="16"/>
+                                    <TextBlock Text="Обновить"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
 
                         <DataGrid ItemsSource="{Binding FilteredUsers}"
@@ -130,20 +152,44 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                                <Button Content="👤 Сотрудник" 
-                                                       Command="{Binding $parent[DataGrid].DataContext.PromoteToEmployeeCommand}"
-                                                       Classes="Primary"/>
-                                                <Button Content="👑 Владелец" 
-                                                       Command="{Binding $parent[DataGrid].DataContext.PromoteToOwnerCommand}"
-                                                       Classes="Primary"/>
-                                                <Button Content="⬇️ Понизить"
-                                                        Command="{Binding $parent[DataGrid].DataContext.DemoteUserCommand}"
-                                                        CommandParameter="{Binding}"/>
-                                                <Button Content="🗑️ Удалить"
-                                                        Command="{Binding $parent[DataGrid].DataContext.DeleteUserCommand}"
+                                                <Button Command="{Binding $parent[DataGrid].DataContext.PromoteToEmployeeCommand}"
+                                                       Classes="Primary">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                        <Image Source="avares://AvaloniaApplication1/icons/employee.png"
+                                                               Width="14"
+                                                               Height="14"/>
+                                                        <TextBlock Text="Сотрудник" Foreground="White"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Command="{Binding $parent[DataGrid].DataContext.PromoteToOwnerCommand}"
+                                                       Classes="Primary">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                        <Image Source="avares://AvaloniaApplication1/icons/owner.png"
+                                                               Width="14"
+                                                               Height="14"/>
+                                                        <TextBlock Text="Владелец" Foreground="White"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Command="{Binding $parent[DataGrid].DataContext.DemoteUserCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                        <Image Source="avares://AvaloniaApplication1/icons/downgare.png"
+                                                               Width="14"
+                                                               Height="14"/>
+                                                        <TextBlock Text="Понизить"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Command="{Binding $parent[DataGrid].DataContext.DeleteUserCommand}"
                                                         CommandParameter="{Binding}"
                                                         Background="{StaticResource DangerBrush}"
-                                                        Foreground="White"/>
+                                                        Foreground="White">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                        <Image Source="avares://AvaloniaApplication1/icons/delete.png"
+                                                               Width="14"
+                                                               Height="14"/>
+                                                        <TextBlock Text="Удалить" Foreground="White"/>
+                                                    </StackPanel>
+                                                </Button>
                                             </StackPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>

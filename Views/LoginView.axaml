@@ -10,12 +10,16 @@
     <Border Background="{DynamicResource SystemAltHighColor}" CornerRadius="10" Padding="30" BorderBrush="{DynamicResource SystemBaseMediumLowColor}" BorderThickness="1">
         <StackPanel Spacing="15" Width="300">
             <!-- Header - Uses accent color -->
-            <TextBlock Text="🦀 Морепродукты" 
-                      FontSize="24" 
-                      FontWeight="Bold" 
-                      HorizontalAlignment="Center"
-                      Margin="0,0,0,10"
-                      Foreground="{DynamicResource SystemAccentColor}"/>
+            <StackPanel HorizontalAlignment="Center" Spacing="8">
+                <Image Source="avares://AvaloniaApplication1/icons/crab.png"
+                       Width="72"
+                       Height="72"/>
+                <TextBlock Text="Морепродукты" 
+                          FontSize="24" 
+                          FontWeight="Bold" 
+                          HorizontalAlignment="Center"
+                          Foreground="{DynamicResource SystemAccentColor}"/>
+            </StackPanel>
 
             <!-- Error Message -->
             <TextBlock Text="{Binding ErrorMessage}" 

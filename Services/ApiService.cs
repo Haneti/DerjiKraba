@@ -612,6 +612,20 @@ namespace AvaloniaApplication1.Services
             }
         }
 
+        public async Task<bool> MarkConversationReadAsync(string clientPhone)
+        {
+            try
+            {
+                var response = await _httpClient.PatchAsync($"support/conversations/{clientPhone}/read", null);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Mark read error: {ex.Message}");
+                return false;
+            }
+        }
+
         public async Task<bool> SendMessageAsync(string clientPhone, string senderPhone, string text, string? imageUrl = null)
         {
             try

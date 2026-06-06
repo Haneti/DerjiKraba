@@ -42,7 +42,12 @@ namespace AvaloniaApplication1.Models
         public string? ImageHash { get; set; }
 
         public string DisplayPrice => $"{PricePerKg:F2} ₽/{(UnitType == "piece" ? "шт" : "кг")}";
-        public string StockStatus => QuantityInStock > 0 ? $"В наличии: {QuantityInStock:F0} {UnitType}" : "Нет в наличии";
+        public string StockStatus => QuantityInStock > 0 ? $"В наличии: {QuantityInStock:F0} {(UnitType == "piece" ? "шт" : "кг")}" : "Нет в наличии";
+
+        /// <summary>
+        /// True if product is out of stock (quantity is zero or less)
+        /// </summary>
+        public bool IsOutOfStock => QuantityInStock <= 0;
         
         /// <summary>
         /// True if product is expired (expiry date passed)
@@ -55,6 +60,11 @@ namespace AvaloniaApplication1.Models
                 return ExpiryDate.Value.Date < DateTime.Today;
             }
         }
+
+        /// <summary>
+        /// Alert level: 0 = normal, 1 = out of stock, 2 = expired
+        /// </summary>
+        public int AlertLevel => IsExpired ? 2 : (IsOutOfStock ? 1 : 0);
         
         /// <summary>
         /// True if expiry date is within 14 days from today or already expired
