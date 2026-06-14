@@ -141,13 +141,24 @@
                BorderThickness="1">
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="20,15,20,5">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="20,15,20,5">
                     <TextBlock Text="Отчет инвентаризации" 
                               FontSize="20" 
                               FontWeight="Bold"
                               Foreground="{DynamicResource SystemBaseHighColor}"
                               VerticalAlignment="Center"/>
                     <Button Grid.Column="1" 
+                           Command="{Binding ExportReportAsyncCommand}"
+                           Classes="Secondary"
+                           Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Image Source="avares://AvaloniaApplication1/icons/document.png"
+                                   Width="16" Height="16"/>
+                            <TextBlock Text="Сохранить отчет"
+                                      Foreground="{DynamicResource SystemBaseHighColor}"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Grid.Column="2" 
                            Content="Готово" 
                            Command="{Binding CloseStatisticsCommand}"
                            Background="Transparent"
@@ -155,6 +166,23 @@
                            FontWeight="SemiBold"
                            BorderThickness="0"/>
                 </Grid>
+                
+                <!-- Error message if API updates failed -->
+                <Border Grid.Row="0" 
+                       Background="#1AFEF3C7" 
+                       CornerRadius="8" 
+                       Padding="12"
+                       Margin="20,50,20,0"
+                       IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="⚠️" FontSize="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding ErrorMessage}" 
+                                  FontSize="13"
+                                  TextWrapping="Wrap"
+                                  Foreground="#92400E"
+                                  VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
                 
                 <ScrollViewer Grid.Row="1" Padding="20">
                     <StackPanel Spacing="20">

@@ -42,6 +42,9 @@ namespace AvaloniaApplication1.ViewModels
         private bool _isDarkMode = false;
 
         [ObservableProperty]
+        private bool _isRestoringSession = true;
+
+        [ObservableProperty]
         private int _pendingOrdersCount = 0;
 
         [ObservableProperty]
@@ -63,9 +66,6 @@ namespace AvaloniaApplication1.ViewModels
 
         public MainViewModel()
         {
-            // Temp placeholder until session restore completes
-            CurrentView = new LoginViewModel();
-            
             // Initialize theme
             IsDarkMode = ThemeManager.Instance.CurrentTheme == ThemeMode.Dark;
             ThemeManager.Instance.ThemeChanged += (s, mode) =>
@@ -83,18 +83,18 @@ namespace AvaloniaApplication1.ViewModels
                 var savedUser = await ApiService.LoadSessionAsync();
                 if (savedUser != null && !string.IsNullOrEmpty(savedUser.Token) && !string.IsNullOrEmpty(savedUser.SessionKey))
                 {
-                    var api = new ApiService(savedUser.Token, savedUser.SessionKey);
-                    var currentUser = await api.GetCurrentUserAsync();
-                    if (currentUser != null && currentUser.IsStaff)
+                    // Trust the saved session data — auth/me may not exist on the server.
+                    // The first real API call will naturally validate the token.
+                    if (savedUser.IsStaff)
                     {
-                        currentUser.Token = savedUser.Token;
-                        currentUser.SessionKey = savedUser.SessionKey;
-                        OnLoginCompleted(currentUser);
-                        Console.WriteLine($"✅ Session restored for {currentUser.FullName}");
+                        OnLoginCompleted(savedUser);
+                        Console.WriteLine($"✅ Session restored for {savedUser.FullName}");
+                        IsRestoringSession = false;
                         return;
                     }
                     else
                     {
+                        Console.WriteLine($"🚫 Saved user is not staff — clearing session");
                         ApiService.ClearSession();
                     }
                 }
@@ -109,6 +109,7 @@ namespace AvaloniaApplication1.ViewModels
             loginVm.LoginCompleted += OnLoginCompleted;
             CurrentView = loginVm;
             CurrentViewTitle = "Вход";
+            IsRestoringSession = false;
         }
 
         private void OnLoginCompleted(User? user)

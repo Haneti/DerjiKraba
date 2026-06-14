@@ -191,16 +191,26 @@ namespace AvaloniaApplication1.Services
             try
             {
                 var response = await _httpClient.GetAsync("auth/me");
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    throw new HttpRequestException("Unauthorized", null, System.Net.HttpStatusCode.Unauthorized);
+                }
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    Console.WriteLine("⚠️ auth/me endpoint not found (404)");
+                    return null;
+                }
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<User>(_jsonOptions);
                 }
-                return null;
+                // Any other non-success status (500, 503, etc.) is a server error — throw so caller can keep session
+                throw new HttpRequestException($"Server returned {response.StatusCode}", null, response.StatusCode);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not HttpRequestException)
             {
-                Console.WriteLine($"Get current user error: {ex.Message}");
-                return null;
+                Console.WriteLine($"Get current user network error: {ex.Message}");
+                throw new HttpRequestException($"Network error: {ex.Message}", ex);
             }
         }
 
@@ -263,25 +273,91 @@ namespace AvaloniaApplication1.Services
             }
         }
 
+        private static readonly string ProductsCacheFilePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "DerjiKrabaDesktop",
+            "products_cache.json"
+        );
+
+        public static async Task SaveProductsCacheAsync(List<Product> products)
+        {
+            try
+            {
+                var directory = Path.GetDirectoryName(ProductsCacheFilePath);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
+
+                var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+                var json = JsonSerializer.Serialize(products, options);
+                await File.WriteAllTextAsync(ProductsCacheFilePath, json);
+                Console.WriteLine($"✅ Products cache saved ({products.Count} items)");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Save products cache error: {ex.Message}");
+            }
+        }
+
+        public static List<Product>? LoadProductsCache()
+        {
+            try
+            {
+                if (!File.Exists(ProductsCacheFilePath))
+                    return null;
+
+                var json = File.ReadAllText(ProductsCacheFilePath);
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+                var products = JsonSerializer.Deserialize<List<Product>>(json, options);
+                if (products != null && products.Count > 0)
+                {
+                    Console.WriteLine($"✅ Products cache loaded ({products.Count} items)");
+                    return products;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Load products cache error: {ex.Message}");
+                return null;
+            }
+        }
+
+        public static void ClearProductsCache()
+        {
+            try
+            {
+                if (File.Exists(ProductsCacheFilePath))
+                    File.Delete(ProductsCacheFilePath);
+                Console.WriteLine("✅ Products cache cleared");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Clear products cache error: {ex.Message}");
+            }
+        }
+
         #endregion
 
         #region Products
 
-        public async Task<List<Product>> GetProductsAsync()
+        public async Task<List<Product>> GetProductsAsync(bool useCache = true)
         {
             try
             {
                 var response = await _httpClient.GetAsync("products");
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<List<Product>>(_jsonOptions) ?? new List<Product>();
+                    var products = await response.Content.ReadFromJsonAsync<List<Product>>(_jsonOptions) ?? new List<Product>();
+                    await SaveProductsCacheAsync(products);
+                    return products;
                 }
-                return new List<Product>();
+                Console.WriteLine($"⚠️ Get products returned {response.StatusCode}, falling back to cache");
+                return LoadProductsCache() ?? new List<Product>();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Get products error: {ex.Message}");
-                return new List<Product>();
+                Console.WriteLine($"Get products error: {ex.Message}, falling back to cache");
+                return LoadProductsCache() ?? new List<Product>();
             }
         }
 
@@ -352,6 +428,32 @@ namespace AvaloniaApplication1.Services
             {
                 Console.WriteLine($"Update product error: {ex.Message}");
                 return null;
+            }
+        }
+
+        public async Task<bool> UpdateProductQuantityAsync(string id, decimal quantity)
+        {
+            try
+            {
+                var content = new StringContent(
+                    JsonSerializer.Serialize(new { quantity_in_stock = quantity }),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                var response = await _httpClient.PatchAsync($"products/{id}", content);
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"✅ Updated product {id} quantity to {quantity}");
+                    return true;
+                }
+                Console.WriteLine($"❌ Failed to update product {id} quantity: {response.StatusCode}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Update product quantity error: {ex.Message}");
+                return false;
             }
         }
 

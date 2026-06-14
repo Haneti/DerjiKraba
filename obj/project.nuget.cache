@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "8+B7OBVVaF8=",
+  "dgSpecHash": "IIZvOVvotXk=",
   "success": true,
   "projectFilePath": "/Users/haneti/Desktop/DerjiKraba/AvaloniaApplication1.csproj",
   "expectedPackageFiles": [
@@ -27,6 +27,7 @@
     "/Users/haneti/.nuget/packages/harfbuzzsharp.nativeassets.webassembly/8.3.1.1/harfbuzzsharp.nativeassets.webassembly.8.3.1.1.nupkg.sha512",
     "/Users/haneti/.nuget/packages/harfbuzzsharp.nativeassets.win32/8.3.1.1/harfbuzzsharp.nativeassets.win32.8.3.1.1.nupkg.sha512",
     "/Users/haneti/.nuget/packages/microcom.runtime/0.11.0/microcom.runtime.0.11.0.nupkg.sha512",
+    "/Users/haneti/.nuget/packages/questpdf/2024.12.3/questpdf.2024.12.3.nupkg.sha512",
     "/Users/haneti/.nuget/packages/skiasharp/2.88.9/skiasharp.2.88.9.nupkg.sha512",
     "/Users/haneti/.nuget/packages/skiasharp.nativeassets.linux/2.88.9/skiasharp.nativeassets.linux.2.88.9.nupkg.sha512",
     "/Users/haneti/.nuget/packages/skiasharp.nativeassets.macos/2.88.9/skiasharp.nativeassets.macos.2.88.9.nupkg.sha512",

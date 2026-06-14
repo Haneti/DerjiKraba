@@ -74,6 +74,10 @@
               "target": "Package",
               "version": "[8.2.1, )"
             },
+            "QuestPDF": {
+              "target": "Package",
+              "version": "[2024.12.3, )"
+            },
             "Tmds.DBus.Protocol": {
               "target": "Package",
               "version": "[0.21.3, )"

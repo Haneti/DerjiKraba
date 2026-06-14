@@ -156,20 +156,39 @@ namespace AvaloniaApplication1.ViewModels
 
             try
             {
-                var products = await _apiService.GetProductsAsync();
-                Products.Clear();
-                foreach (var product in products)
+                // 1. Show cached products instantly (if available)
+                var cachedProducts = ApiService.LoadProductsCache();
+                if (cachedProducts != null && cachedProducts.Count > 0)
                 {
-                    Products.Add(product);
+                    Products.Clear();
+                    foreach (var product in cachedProducts)
+                    {
+                        Products.Add(product);
+                    }
+                    FilterProducts();
+                    HasProducts = true;
+                    Console.WriteLine($"📦 Showing {Products.Count} products from cache");
                 }
-                FilterProducts();
-                Console.WriteLine($"✅ Loaded {Products.Count} products");
+
+                // 2. Fetch fresh data from server
+                var products = await _apiService.GetProductsAsync();
+                if (products.Count > 0)
+                {
+                    Products.Clear();
+                    foreach (var product in products)
+                    {
+                        Products.Add(product);
+                    }
+                    FilterProducts();
+                    Console.WriteLine($"✅ Loaded {Products.Count} products from server");
+                }
                 Console.WriteLine($"📊 {ImageCacheManager.Instance.GetMemoryCacheStats()}");
             }
             catch (Exception ex)
             {
                 ErrorMessage = $"Ошибка загрузки: {ex.Message}";
-                HasProducts = false;
+                // Keep cached products visible if server fails
+                if (Products.Count == 0) HasProducts = false;
             }
             finally
             {

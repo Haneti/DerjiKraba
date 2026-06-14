@@ -195,7 +195,7 @@
                                       Foreground="{DynamicResource SystemBaseHighColor}"/>
                         
                         <NumericUpDown Value="{Binding QuantityInStock}" 
-                                      FormatString="0"
+                                      FormatString="0.000"
                                       Minimum="0"
                                       Maximum="1000000"
                                       Watermark="Количество"

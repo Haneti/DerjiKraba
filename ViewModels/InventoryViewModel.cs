@@ -1,11 +1,17 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Platform.Storage;
 using AvaloniaApplication1.Models;
 using AvaloniaApplication1.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace AvaloniaApplication1.ViewModels
 {
@@ -174,61 +180,47 @@ namespace AvaloniaApplication1.ViewModels
             Console.WriteLine("✓ Finishing inventory...");
             IsProcessing = true;
             ErrorMessage = string.Empty;
-            
+
             try
             {
-                // Check if there are differences
+                // Recalculate counts from current edited values before proceeding
+                UpdateCounts();
+
                 var hasDifferences = InventoryItems.Any(x => Math.Abs(x.Difference) > 0.01m);
-                
+                var failedUpdates = new System.Collections.Generic.List<string>();
+
                 if (hasDifferences)
                 {
-                    // In real implementation, show confirmation dialog
-                    Console.WriteLine("⚠️ There are differences, applying adjustments...");
-                }
-                
-                // Apply changes
-                var adjustmentRequest = new InventoryAdjustmentRequest
-                {
-                    Items = InventoryItems
-                        .Where(x => Math.Abs(x.Difference) > 0.01m)
-                        .Select(x => new InventoryAdjustmentItem
-                        {
-                            ProductId = x.ProductId,
-                            ActualQuantity = x.ActualQuantity,
-                            Comment = x.Difference > 0 ? "Surplus found" : "Shortage found"
-                        })
-                        .ToList()
-                };
-                
-                if (adjustmentRequest.Items.Any())
-                {
-                    var success = await _apiService.ApplyInventoryAdjustmentAsync(adjustmentRequest);
-                    if (success)
+                    Console.WriteLine("⚠️ There are differences, updating products on server...");
+
+                    // Update each product individually on the server (matching iOS approach)
+                    foreach (var item in InventoryItems.Where(x => Math.Abs(x.Difference) > 0.01m))
                     {
-                        Console.WriteLine("✅ Inventory adjustments applied successfully");
+                        var success = await _apiService.UpdateProductQuantityAsync(item.ProductId, item.ActualQuantity);
+                        if (!success)
+                        {
+                            failedUpdates.Add(item.ProductName);
+                            Console.WriteLine($"❌ Failed to update '{item.ProductName}' quantity");
+                        }
+                    }
+
+                    if (failedUpdates.Count > 0)
+                    {
+                        ErrorMessage = $"Не удалось обновить: {string.Join(", ", failedUpdates)}";
                     }
                     else
                     {
-                        ErrorMessage = "Failed to apply adjustments";
+                        Console.WriteLine("✅ All product quantities updated successfully");
                     }
                 }
                 else
                 {
                     Console.WriteLine("ℹ️ No adjustments needed");
                 }
-                
-                // Calculate and show statistics
-                if (hasDifferences)
-                {
-                    CalculateStatistics();
-                    ShowStatistics = true;
-                }
-                else
-                {
-                    InventoryItems.Clear();
-                    FilteredItems.Clear();
-                    ShowStatistics = false;
-                }
+
+                // Always calculate and show statistics (like iOS does)
+                CalculateStatistics();
+                ShowStatistics = true;
                 OnPropertyChanged(nameof(HasInventoryStarted));
             }
             catch (Exception ex)
@@ -240,6 +232,241 @@ namespace AvaloniaApplication1.ViewModels
             {
                 IsProcessing = false;
             }
+        }
+
+        [RelayCommand]
+        private async Task ExportReportAsync()
+        {
+            try
+            {
+                var dateStr = DateTime.Now.ToString("dd.MM.yyyy");
+                var fileName = $"Инвентаризация_{DateTime.Now:dd-MM-yyyy}.pdf";
+
+                // Show save file dialog
+                var storage = App.StorageProvider;
+                if (storage == null)
+                {
+                    ErrorMessage = "Не удалось открыть диалог сохранения";
+                    return;
+                }
+
+                var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+                {
+                    Title = "Сохранить отчет инвентаризации",
+                    SuggestedFileName = fileName,
+                    DefaultExtension = "pdf",
+                    FileTypeChoices = new[]
+                    {
+                        new FilePickerFileType("PDF документ")
+                        {
+                            Patterns = new[] { "*.pdf" }
+                        }
+                    }
+                });
+
+                if (file == null)
+                {
+                    Console.WriteLine("📄 Save cancelled by user");
+                    return;
+                }
+
+                var savePath = file.Path.LocalPath;
+                GenerateReportPdf(savePath, dateStr);
+
+                Console.WriteLine($"📄 PDF report saved to: {savePath}");
+
+                // Open the PDF with default app
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = savePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Ошибка экспорта PDF: {ex.Message}";
+                Console.WriteLine($"❌ PDF export error: {ex.Message}");
+            }
+        }
+
+        private void GenerateReportPdf(string filePath, string reportDate)
+        {
+            QuestPDF.Settings.License = LicenseType.Community;
+
+            var differences = InventoryItems
+                .Where(x => Math.Abs(x.Difference) > 0.01m)
+                .ToList();
+
+            var shortageItems = differences.Where(x => x.Difference < 0).ToList();
+            var surplusItems = differences.Where(x => x.Difference > 0).ToList();
+            var totalShortageValue = shortageItems.Sum(x => Math.Abs(x.Difference) * x.PricePerKg);
+            var totalSurplusValue = surplusItems.Sum(x => x.Difference * x.PricePerKg);
+
+            Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(30);
+                    page.DefaultTextStyle(x => x.FontSize(11).FontFamily("Arial"));
+
+                    page.Header().Column(header =>
+                    {
+                        header.Item().Text($"Инвентаризация за {reportDate} г.")
+                            .FontSize(18).Bold();
+                        header.Item().Text($"Ответственный: {_currentUser.FullName}")
+                            .FontSize(10).FontColor(Colors.Grey.Medium);
+                    });
+
+                    page.Content().Column(col =>
+                    {
+                        col.Spacing(15);
+
+                        // Summary cards row 1
+                        col.Item().Row(row =>
+                        {
+                            row.RelativeItem().Border(1).BorderColor(Colors.Blue.Medium).Background(Colors.Blue.Lighten4).Padding(10)
+                                .Column(c =>
+                                {
+                                    c.Item().Text("Всего товаров").FontSize(9).FontColor(Colors.Grey.Medium);
+                                    c.Item().Text(InventoryItems.Count.ToString()).FontSize(16).Bold();
+                                });
+                            row.RelativeItem().Border(1).BorderColor(Colors.Green.Medium).Background(Colors.Green.Lighten4).Padding(10)
+                                .Column(c =>
+                                {
+                                    c.Item().Text("В норме").FontSize(9).FontColor(Colors.Grey.Medium);
+                                    c.Item().Text(NormalCount.ToString()).FontSize(16).Bold();
+                                });
+                        });
+
+                        // Summary cards row 2
+                        col.Item().Row(row =>
+                        {
+                            row.RelativeItem().Border(1).BorderColor(Colors.Red.Medium).Background(Colors.Red.Lighten4).Padding(10)
+                                .Column(c =>
+                                {
+                                    c.Item().Text("Недостачи").FontSize(9).FontColor(Colors.Grey.Medium);
+                                    c.Item().Text(ShortagesCount.ToString()).FontSize(16).Bold().FontColor(Colors.Red.Medium);
+                                });
+                            row.RelativeItem().Border(1).BorderColor(Colors.Green.Medium).Background(Colors.Green.Lighten4).Padding(10)
+                                .Column(c =>
+                                {
+                                    c.Item().Text("Излишки").FontSize(9).FontColor(Colors.Grey.Medium);
+                                    c.Item().Text(SurplusesCount.ToString()).FontSize(16).Bold().FontColor(Colors.Green.Medium);
+                                });
+                        });
+
+                        // Financial summary
+                        if (shortageItems.Any() || surplusItems.Any())
+                        {
+                            col.Item().Border(1).BorderColor(Colors.Grey.Medium).Background(Colors.Grey.Lighten4).Padding(12)
+                                .Column(c =>
+                                {
+                                    if (shortageItems.Any())
+                                        c.Item().Row(r =>
+                                        {
+                                            r.RelativeItem().Text("Сумма недостач:");
+                                            r.ConstantItem(120).AlignRight().Text($"-{totalShortageValue:F0} ₽").Bold().FontColor(Colors.Red.Medium);
+                                        });
+                                    if (surplusItems.Any())
+                                        c.Item().Row(r =>
+                                        {
+                                            r.RelativeItem().Text("Сумма излишков:");
+                                            r.ConstantItem(120).AlignRight().Text($"+{totalSurplusValue:F0} ₽").Bold().FontColor(Colors.Green.Medium);
+                                        });
+                                });
+                        }
+
+                        // Shortages section
+                        if (shortageItems.Any())
+                        {
+                            col.Item().PaddingTop(10).Text("Недостачи").FontSize(14).Bold().FontColor(Colors.Red.Medium);
+                            col.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.ConstantColumn(80);
+                                    columns.ConstantColumn(80);
+                                    columns.ConstantColumn(80);
+                                    columns.ConstantColumn(80);
+                                });
+                                table.Header(header =>
+                                {
+                                    header.Cell().Text("Товар").Bold();
+                                    header.Cell().AlignCenter().Text("Система").Bold();
+                                    header.Cell().AlignCenter().Text("Факт").Bold();
+                                    header.Cell().AlignCenter().Text("Разница").Bold();
+                                    header.Cell().AlignRight().Text("Сумма").Bold();
+                                });
+                                foreach (var item in shortageItems)
+                                {
+                                    var unit = item.UnitType == "piece" ? "шт" : "кг";
+                                    var diffVal = Math.Abs(item.Difference) * item.PricePerKg;
+                                    table.Cell().Text(item.ProductName);
+                                    table.Cell().AlignCenter().Text($"{item.SystemQuantity:F2} {unit}");
+                                    table.Cell().AlignCenter().Text($"{item.ActualQuantity:F2} {unit}");
+                                    table.Cell().AlignCenter().Text($"{item.Difference:F2} {unit}").FontColor(Colors.Red.Medium);
+                                    table.Cell().AlignRight().Text($"{diffVal:F2} ₽");
+                                }
+                            });
+                        }
+
+                        // Surpluses section
+                        if (surplusItems.Any())
+                        {
+                            col.Item().PaddingTop(10).Text("Излишки").FontSize(14).Bold().FontColor(Colors.Green.Medium);
+                            col.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.ConstantColumn(80);
+                                    columns.ConstantColumn(80);
+                                    columns.ConstantColumn(80);
+                                    columns.ConstantColumn(80);
+                                });
+                                table.Header(header =>
+                                {
+                                    header.Cell().Text("Товар").Bold();
+                                    header.Cell().AlignCenter().Text("Система").Bold();
+                                    header.Cell().AlignCenter().Text("Факт").Bold();
+                                    header.Cell().AlignCenter().Text("Разница").Bold();
+                                    header.Cell().AlignRight().Text("Сумма").Bold();
+                                });
+                                foreach (var item in surplusItems)
+                                {
+                                    var unit = item.UnitType == "piece" ? "шт" : "кг";
+                                    var diffVal = Math.Abs(item.Difference) * item.PricePerKg;
+                                    table.Cell().Text(item.ProductName);
+                                    table.Cell().AlignCenter().Text($"{item.SystemQuantity:F2} {unit}");
+                                    table.Cell().AlignCenter().Text($"{item.ActualQuantity:F2} {unit}");
+                                    table.Cell().AlignCenter().Text($"+{item.Difference:F2} {unit}").FontColor(Colors.Green.Medium);
+                                    table.Cell().AlignRight().Text($"{diffVal:F2} ₽");
+                                }
+                            });
+                        }
+
+                        // Final status
+                        if (!differences.Any())
+                        {
+                            col.Item().PaddingTop(20).AlignCenter().Text("Всё в порядке!").FontSize(16).Bold().FontColor(Colors.Green.Medium);
+                            col.Item().AlignCenter().Text("Расхождений не обнаружено. Все товары соответствуют учетным данным.").FontSize(11).FontColor(Colors.Grey.Medium);
+                        }
+                        else if (!shortageItems.Any() && surplusItems.Any())
+                        {
+                            col.Item().PaddingTop(20).AlignCenter().Text("Что-то не так!").FontSize(16).Bold().FontColor(Colors.Orange.Medium);
+                            col.Item().AlignCenter().Text($"Инвентаризация закрыта с расхождением. Обнаружен излишек товара ({surplusItems.Count} поз.).").FontSize(11).FontColor(Colors.Grey.Medium);
+                        }
+                        else if (shortageItems.Any())
+                        {
+                            col.Item().PaddingTop(20).AlignCenter().Text("Что-то не так!").FontSize(16).Bold().FontColor(Colors.Red.Medium);
+                            col.Item().AlignCenter().Text($"Инвентаризация закрыта с расхождением. Недостача: {shortageItems.Count} поз., Излишек: {surplusItems.Count} поз.").FontSize(11).FontColor(Colors.Grey.Medium);
+                        }
+                    });
+                });
+            })
+            .GeneratePdf(filePath);
         }
         
         private void FilterItems()
@@ -282,6 +509,9 @@ namespace AvaloniaApplication1.ViewModels
         
         private void CalculateStatistics()
         {
+            // Recalculate counts to reflect current edited values
+            UpdateCounts();
+
             var differences = InventoryItems
                 .Where(x => Math.Abs(x.Difference) > 0.01m)
                 .ToList();
@@ -385,7 +615,7 @@ namespace AvaloniaApplication1.ViewModels
             get
             {
                 var sign = Difference >= 0 ? "+" : "";
-                return $"{sign}{Difference:F3} {UnitType}";
+                return $"{sign}{Difference:F3} {UnitDisplay}";
             }
         }
         

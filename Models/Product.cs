@@ -42,7 +42,7 @@ namespace AvaloniaApplication1.Models
         public string? ImageHash { get; set; }
 
         public string DisplayPrice => $"{PricePerKg:F2} ₽/{(UnitType == "piece" ? "шт" : "кг")}";
-        public string StockStatus => QuantityInStock > 0 ? $"В наличии: {QuantityInStock:F0} {(UnitType == "piece" ? "шт" : "кг")}" : "Нет в наличии";
+        public string StockStatus => QuantityInStock > 0 ? $"В наличии: {QuantityInStock.ToString("0.###")} {(UnitType == "piece" ? "шт" : "кг")}" : "Нет в наличии";
 
         /// <summary>
         /// True if product is out of stock (quantity is zero or less)

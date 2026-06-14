@@ -193,7 +193,8 @@ function requireAuth(req, res, next) {
   }
   
   // Skip auth endpoints (they handle their own auth)
-  if (path.startsWith('/auth/')) {
+  // auth/me is NOT skipped — it needs req.userId from JWT validation
+  if (path.startsWith('/auth/') && path !== '/auth/me') {
     return next();
   }
   
@@ -289,12 +290,33 @@ function createHttpError(status, message, details) {
   return err;
 }
 
-async function createOrderInternal({ userId, deliveryType, deliveryAddress, deliveryDetails, notes, rawItems }) {
-  if (!userId) {
-    throw createHttpError(400, 'user_id is required');
+async function createOrderInternal({ userId, phone, deliveryType, deliveryAddress, deliveryDetails, notes, rawItems }) {
+  if (!userId && !phone) {
+    throw createHttpError(400, 'user_id or phone is required');
   }
   if (!Array.isArray(rawItems) || rawItems.length === 0) {
     throw createHttpError(400, 'items are required');
+  }
+
+  // If userId is provided, verify it exists; otherwise look up by phone
+  if (userId) {
+    const [users] = await pool.query("SELECT id FROM users WHERE id = ?", [userId]);
+    if (users.length === 0) {
+      if (phone) {
+        const [usersByPhone] = await pool.query("SELECT id FROM users WHERE phone = ?", [phone]);
+        if (usersByPhone.length > 0) {
+          userId = usersByPhone[0].id;
+          console.log(`🔍 Resolved userId by phone: ${userId}`);
+        }
+      }
+    }
+  } else if (phone) {
+    const [users] = await pool.query("SELECT id FROM users WHERE phone = ?", [phone]);
+    if (users.length > 0) userId = users[0].id;
+  }
+
+  if (!userId) {
+    throw createHttpError(400, 'User not found');
   }
 
   const allowedDeliveryTypes = new Set(['delivery', 'pickup']);
@@ -671,6 +693,7 @@ app.post('/orders', async (req, res) => {
   try {
     const { orderId } = await createOrderInternal({
       userId: req.body?.user_id,
+      phone: req.userPhone,
       deliveryType: req.body?.delivery_type,
       deliveryAddress: req.body?.delivery_address,
       deliveryDetails: req.body?.delivery_details,
@@ -972,6 +995,7 @@ app.post('/orders/legacy', async (req, res) => {
   try {
     const { orderId } = await createOrderInternal({
       userId: req.body?.user_id,
+      phone: req.userPhone,
       deliveryType: req.body?.delivery_type,
       deliveryAddress: req.body?.delivery_address,
       deliveryDetails: req.body?.delivery_details,
@@ -1699,7 +1723,10 @@ app.get("/auth/me", async (req, res) => {
     return res.status(404).json({ error: "User not found" });
   }
   
-  res.json(rows[0]);
+  // Use mapUser for consistent camelCase response (same as login)
+  const userData = mapUser(rows[0]);
+  console.log(`✅ /auth/me for ${req.userPhone}: role=${userData.role}`);
+  res.json(userData);
 });
 
 
