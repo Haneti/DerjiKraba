@@ -615,7 +615,7 @@ namespace AvaloniaApplication1.ViewModels
             get
             {
                 var sign = Difference >= 0 ? "+" : "";
-                return $"{sign}{Difference:F3} {UnitDisplay}";
+                return $"{sign}{Difference:F3} {UnitType}";
             }
         }
         
